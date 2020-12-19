@@ -1,3 +1,10 @@
+/**========================================================================
+ * todo                             TODO
+ *   -[ ] mieux controller la longueur des segments
+ *   -[ ] corriger la densité
+ *========================================================================**/
+
+
 function addLine({
     svg,
     O,
@@ -14,7 +21,7 @@ function addLine({
         ["x2", A.x + "px"],
         ["y2", A.y + "px"],
         ["stroke", color],
-        ["stroke-width", 0.5]
+        ["stroke-width", 0.4]
     ].forEach(([att, val]) => l.setAttribute(att, val));
 
 
@@ -26,17 +33,14 @@ function draw({
     svg,
     O,
     A,
-    angle = 0.2,
-    count = 360
+    angle,
+    count
 }) {
     var beta, xB, yB;
 
     beta = angle * Math.PI / 180.0;
 
-    // while (svg.firstChild)
-    //     svg.removeChild(svg.firstChild);
-
-    [...Array(count).keys()].forEach(_line => {
+    [...Array(count).keys()].forEach( ()=> {
         xB = Math.round(O.x + (A.x - O.x) * Math.cos(beta) + (A.y - O.y) * Math.sin(beta));
         yB = Math.round(O.y - (A.x - O.x) * Math.sin(beta) + (A.y - O.y) * Math.cos(beta));
         addLine({
@@ -60,26 +64,27 @@ function draw({
 
 function run({
     svgID = "tagSVG",
-    width = 1000,
-    height = 1000,
-    angle = 0.1,
-    imgPerSecond = 25, 
-    count
+    width = 500,
+    height = 500,
+    angle = 10,
+    imgPerSecond = 30, 
+    density=180
 }) {
     let svg = document.getElementById(svgID)
     svg.setAttribute("width", width)
     svg.setAttribute("height", height);
-    if (!count) {
-        count = 180 / angle
-    }
+ 
+    density = density / angle
+    
 
     let interval = setInterval(renderFrame(), 1000/imgPerSecond)
 
     function renderFrame() {
         return () => {
-            renderScene(width, height, svg, angle, count);
-            angle += 0.00001;
-            if (angle > 1) {
+            document.getElementById("angle").innerText = angle
+            renderScene(width, height, svg, angle, density);
+            angle -= 0.001;
+            if (angle < 0) {
                 clearInterval(interval);
             }
         };
@@ -87,9 +92,7 @@ function run({
 }
 
 function renderScene(width, height, svg, angle, count) {
-    while (svg.lastChild) {
-        svg.removeChild(svg.lastChild);
-    }
+    flushScene(svg);
     getData(width, height).forEach(([O, A]) => {
         draw({
             svg,
@@ -99,6 +102,12 @@ function renderScene(width, height, svg, angle, count) {
             count
         });
     });
+}
+
+function flushScene(svg) {
+    while (svg.lastChild) {
+        svg.removeChild(svg.lastChild);
+    }
 }
 
 function getData(width, height) {
