@@ -63,6 +63,7 @@ function run({
     width = 1000,
     height = 1000,
     angle = 0.1,
+    imgPerSecond = 25, 
     count
 }) {
     let svg = document.getElementById(svgID)
@@ -72,13 +73,17 @@ function run({
         count = 180 / angle
     }
 
-    let interval = setInterval(() => {
-        renderScene(width, height, svg, angle, count);
-        angle += 0.00001
-        if (angle > 1) {
-            clearInterval(interval)
-        }
-    }, 1)
+    let interval = setInterval(renderFrame(), 1000/imgPerSecond)
+
+    function renderFrame() {
+        return () => {
+            renderScene(width, height, svg, angle, count);
+            angle += 0.00001;
+            if (angle > 1) {
+                clearInterval(interval);
+            }
+        };
+    }
 }
 
 function renderScene(width, height, svg, angle, count) {
