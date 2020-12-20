@@ -2,6 +2,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    
 
     <style>
         .container {
@@ -13,14 +14,18 @@
     </style>
 </head>
 
-<body onload="main ({})">
+<body onload="main()">
 
     <div class="container">
 
         <svg id="tagSVG"></svg>
     </div>
 
-    <p id="angle"></p>
+
+    <table id="debug">
+
+    </table>
+    <button onclick="stopAnimation()">stop</button>
 
 
     <script src="script.js"></script>

@@ -8,6 +8,27 @@ function trace(...args) {
     }
 }
 
+/**
+ * Affiche l'ouverture actuelle de l'angle sur l'interface
+ *
+ * @param {*} angle
+ */
+function debug(data) {
+
+    const html = Object.keys(data).map(prop => `<tr><td>${prop}:</td><td>${display(prop)}</td></tr>`).join('')
+    document.getElementById("debug").innerHTML = html
+
+    function display(property) {
+        return data[property].toFixed ?
+            data[property].toFixed(3) :
+            data[property]
+
+    }
+}
+
+/**================================================================================================
+ *                                         SECTION TOOLS
+ *================================================================================================**/
 
 /**
  * Construit un tableau dont les valeurs sont les index
@@ -16,9 +37,15 @@ function trace(...args) {
  * @return {*} 
  */
 function range(count) {
-    return [...Array(count).keys()];
+    return [...Array(Math.ceil(count)).keys()];
 }
 
+
+
+
+/**================================================================================================
+ *                                         SECTION DRAWING
+ *================================================================================================**/
 
 /**========================================================================
  * todo                             TODO
@@ -98,10 +125,9 @@ function draw({
     }, A);
 }
 
-function computeBeta(angle) {
-    return angle * Math.PI / 180.0;
-}
-
+/**================================================================================================
+ *                                         SECTION MATH
+ *================================================================================================**/
 /**
  * Calcule le coordonnées du point B, 
  * pour former un arc avec le segment OA
@@ -134,7 +160,13 @@ function computeNextPoint({
     };
 }
 
+function computeBeta(angle) {
+    return angle * Math.PI / 180.0;
+}
 
+/**================================================================================================
+ *                                         SECTION DATA
+ *================================================================================================**/
 
 /**
  * Calcul les coordonnées des points de références
@@ -142,7 +174,10 @@ function computeNextPoint({
  *
  * @return {*} 
  */
-function getData({width, height}) {
+function getData({
+    width,
+    height
+}) {
     /**========================================================================
      * todo                             TODO
      *   - [ ] Moduler les données en fonction de le hauteur et de la largeur fournie
@@ -169,9 +204,7 @@ function getData({width, height}) {
  * @param {*} svg
  */
 function flushScene(svg) {
-    while (svg.lastChild) {
-        svg.removeChild(svg.lastChild);
-    }
+    svg.innerHTML = ''
 }
 
 /**
@@ -199,15 +232,6 @@ function drawFrame({
 }
 
 /**
- * Affiche l'ouverture actuelle de l'angle sur l'interface
- *
- * @param {*} angle
- */
-function displayAngle(angle) {
-    document.getElementById("angle").innerText = `angle: ${angle.toFixed(3)}`;
-}
-
-/**
  * Focus sur le dom et initialise la taille du SVG
  *
  * @param {*} {
@@ -229,9 +253,9 @@ function initSVG({
 }
 
 
-function checkOrHalt(runConditions) {
+function checkOrStopAnimation(runConditions) {
     if (runConditions.some(c => !c)) {
-        clearInterval(interval);
+        stopAnimation()
     }
 }
 
@@ -239,16 +263,15 @@ function checkOrHalt(runConditions) {
  *                                         SECTION MAIN
  *================================================================================================**/
 
-const WIDTH = 500
-const HEIGHT = 500
+const WIDTH = 250
+const HEIGHT = 250
 const STARTING_ANGLE = 1
-const IMG_PER_SECOND = 30
-const DENSITY = 10
-const DELTA = -0.001
+const IMG_PER_SECOND = 20
+const DELTA = -0.002
 const SVG_ID = "tagSVG"
 const DEBUG_MODE = true
-const ANIMATION_MODE = false
-const MAX_FRAME = 100
+const ANIMATION_MODE = true
+const MAX_FRAME = 450
 const TOP_RIGHT = {
     x: WIDTH,
     y: 0
@@ -276,17 +299,15 @@ let interval;
  *     width = 500,
  *     height = 500,
  *     angle = 10,
- *     imgPerSecond = 30,
- *     density = 180
+ *     imgPerSecond = 30
  * }
  */
-function main({
+function run({
     svgID = SVG_ID,
     width = WIDTH,
     height = HEIGHT,
     angle = STARTING_ANGLE,
     imgPerSecond = IMG_PER_SECOND,
-    density = DENSITY,
     delta = DELTA,
     maxFrame = MAX_FRAME
 }) {
@@ -295,14 +316,7 @@ function main({
         width,
         height
     });
-    /**========================================================================
-     * todo                             TODO
-     *   - [ ] Corriger la densité
-     *   * Le nombre de segment a afficher doit occuper un angle de 90 degrés   
-     *   
-     *
-     *========================================================================**/
-    density = density / angle
+
 
     if (ANIMATION_MODE) {
         interval = setInterval(renderFrame, 1000 / imgPerSecond)
@@ -311,13 +325,39 @@ function main({
     }
 
     function renderFrame() {
-        displayAngle(angle);
+        let count = computeCount({
+            angle
+        })
+        debug({
+            currentFrame: MAX_FRAME - maxFrame,
+            angle,
+            segmentsPerCorner: count,
+            svgID,
+            width,
+            height,
+            imgPerSecond,
+            delta
+        });
         drawFrame({
             svg,
             angle,
-            count: density
+            count
         });
-        checkOrHalt([angle > 0, maxFrame--]);
+        checkOrStopAnimation([angle > 0, maxFrame--]);
         angle += delta;
     }
+}
+
+function computeCount({
+    angle
+}) {
+    return 90 / angle
+}
+
+function stopAnimation() {
+    clearInterval(interval);
+}
+
+function main() {
+    run({})
 }
