@@ -50,7 +50,6 @@ function range(count) {
 /**========================================================================
  * todo                             TODO
  *  -[ ] mieux controller la longueur des segments
- *  -[ ] corriger la densité
  *  -[ ] gérer la création horaire/anti-horaire des rayons
  *========================================================================**/
 
@@ -164,6 +163,14 @@ function computeBeta(angle) {
     return angle * Math.PI / 180.0;
 }
 
+
+function computeCount({
+    angle,
+    reference = REFERENCE_ANGLE
+}) {
+    return reference / angle
+}
+
 /**================================================================================================
  *                                         SECTION DATA
  *================================================================================================**/
@@ -176,7 +183,8 @@ function computeBeta(angle) {
  */
 function getData({
     width,
-    height
+    height,
+    reference = REFERENCE_DATA
 }) {
     /**========================================================================
      * todo                             TODO
@@ -185,12 +193,7 @@ function getData({
      *   
      *
      *========================================================================**/
-    return [
-        [TOP_LEFT, BOTTOM_LEFT],
-        [BOTTOM_LEFT, BOTTOM_RIGHT],
-        [BOTTOM_RIGHT, TOP_RIGHT],
-        [TOP_RIGHT, TOP_LEFT]
-    ];
+    return REFERENCE_DATA
 }
 
 /**================================================================================================
@@ -252,6 +255,9 @@ function initSVG({
     return svg;
 }
 
+function stopAnimation() {
+    clearInterval(interval);
+}
 
 function checkOrStopAnimation(runConditions) {
     if (runConditions.some(c => !c)) {
@@ -263,15 +269,18 @@ function checkOrStopAnimation(runConditions) {
  *                                         SECTION MAIN
  *================================================================================================**/
 
-const WIDTH = 250
-const HEIGHT = 250
+const WIDTH = 600
+const HEIGHT = 600
 const STARTING_ANGLE = 1
-const IMG_PER_SECOND = 20
-const DELTA = -0.002
+const IMG_PER_SECOND = 25
+const DELTA = 0.001
 const SVG_ID = "tagSVG"
 const DEBUG_MODE = true
 const ANIMATION_MODE = true
-const MAX_FRAME = 450
+const MAX_FRAME = 1000
+const RIGHT_ANGLE = 90
+const SEMI_RIGHT_ANGLE = 45
+const REFERENCE_ANGLE = SEMI_RIGHT_ANGLE
 const TOP_RIGHT = {
     x: WIDTH,
     y: 0
@@ -288,6 +297,19 @@ const BOTTOM_RIGHT = {
     x: WIDTH,
     y: HEIGHT
 };
+const SQUARE = [
+    [TOP_LEFT, BOTTOM_LEFT],
+    [BOTTOM_LEFT, BOTTOM_RIGHT],
+    [BOTTOM_RIGHT, TOP_RIGHT],
+    [TOP_RIGHT, TOP_LEFT]
+];
+const DIAGONAL = [
+    [TOP_LEFT, BOTTOM_RIGHT],
+    [BOTTOM_LEFT, TOP_RIGHT],
+    [BOTTOM_RIGHT, TOP_LEFT],
+    [TOP_RIGHT, BOTTOM_LEFT]
+]
+const REFERENCE_DATA = DIAGONAL
 
 let interval;
 
@@ -344,20 +366,16 @@ function run({
             count
         });
         checkOrStopAnimation([angle > 0, maxFrame--]);
-        angle += delta;
+        angle -= delta;
     }
 }
 
-function computeCount({
-    angle
-}) {
-    return 90 / angle
-}
 
-function stopAnimation() {
-    clearInterval(interval);
-}
 
+/**
+ * Point d'entrée du programme
+ *
+ */
 function main() {
     run({})
 }
