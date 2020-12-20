@@ -142,7 +142,7 @@ function computeNextPoint({
  *
  * @return {*} 
  */
-function getData(width, height) {
+function getData({width, height}) {
     /**========================================================================
      * todo                             TODO
      *   - [ ] Moduler les données en fonction de le hauteur et de la largeur fournie
@@ -199,25 +199,12 @@ function drawFrame({
 }
 
 /**
- * Vérifie que l'ouverture de l'angle courant soit 
- * toujours positive, sinon on arrête l'animation
- *
- * @param {*} angle
- * @param {*} interval
- */
-function checkOrHalt(angle, interval) {
-    if (angle < 0) {
-        clearInterval(interval);
-    }
-}
-
-/**
  * Affiche l'ouverture actuelle de l'angle sur l'interface
  *
  * @param {*} angle
  */
 function displayAngle(angle) {
-    document.getElementById("angle").innerText = angle.toFixed(3);
+    document.getElementById("angle").innerText = `angle: ${angle.toFixed(3)}`;
 }
 
 /**
@@ -241,6 +228,13 @@ function initSVG({
     return svg;
 }
 
+
+function checkOrHalt(runConditions) {
+    if (runConditions.some(c => !c)) {
+        clearInterval(interval);
+    }
+}
+
 /**================================================================================================
  *                                         SECTION MAIN
  *================================================================================================**/
@@ -250,10 +244,11 @@ const HEIGHT = 500
 const STARTING_ANGLE = 1
 const IMG_PER_SECOND = 30
 const DENSITY = 10
-const DELTA = 0.001
+const DELTA = -0.001
 const SVG_ID = "tagSVG"
 const DEBUG_MODE = true
-const ANIMATION_MODE = true
+const ANIMATION_MODE = false
+const MAX_FRAME = 100
 const TOP_RIGHT = {
     x: WIDTH,
     y: 0
@@ -292,7 +287,8 @@ function main({
     angle = STARTING_ANGLE,
     imgPerSecond = IMG_PER_SECOND,
     density = DENSITY,
-    delta = DELTA
+    delta = DELTA,
+    maxFrame = MAX_FRAME
 }) {
     let svg = initSVG({
         svgID,
@@ -319,9 +315,9 @@ function main({
         drawFrame({
             svg,
             angle,
-            density
+            count: density
         });
-        checkOrHalt(angle, interval);
-        angle -= delta;
+        checkOrHalt([angle > 0, maxFrame--]);
+        angle += delta;
     }
 }
