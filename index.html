@@ -2,32 +2,28 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    
-
-    <style>
-        .container {
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
 </head>
 
-<body onload="main()">
-
+<body onload="init()">
     <div class="container">
-        <svg id="tagSVG"></svg>
+        <div class="row">
+            <div class="col">
+                <button onclick="stopAnimation()">stop</button>
+                <button onclick="play(DEFAULT)">play</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <svg id="tagSVG"></svg>
+            </div>
+            <div class="col">
+                <table id="debug">
+                </table>
+            </div>
+        </div>
     </div>
-
-
-    <table id="debug">
-
-    </table>
-    <button onclick="stopAnimation()">stop</button>
-    <button onclick="run({})">play</button>
-
-
     <script src="script.js"></script>
 </body>
 

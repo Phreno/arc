@@ -47,12 +47,6 @@ function range(count) {
  *                                         SECTION DRAWING
  *================================================================================================**/
 
-/**========================================================================
- * todo                             TODO
- *  -[ ] mieux controller la longueur des segments
- *  -[ ] gérer la création horaire/anti-horaire des rayons
- *========================================================================**/
-
 /**
  * Dessine une ligne
  *
@@ -108,12 +102,16 @@ function draw({
     count
 }) {
 
-    range(count).reduce((A) => {
+    range(count).reduce((A, _, i) => {
         /* Dessine le segment OA */
         addLine({
             svg,
             O,
-            A
+            A,
+            color: COLOR_MODE ? pickHex({
+                weight: i
+            }) : REFERENCE_COLOR
+
         })
         /* Prepare le dessin pour la prochaine itération */
         return computeNextPoint({
@@ -124,6 +122,30 @@ function draw({
     }, A);
 }
 
+
+function pickHex({
+    color1 = '009900',
+    color2 = '990000',
+    weight
+}) {
+    var w1 = 1 / (weight + 1);
+    var w2 = 1 - 1 / (w1 + 1);
+    var rgb = [Math.round(color1[0] * w1 + color2[0] * w2),
+        Math.round(color1[1] * w1 + color2[1] * w2),
+        Math.round(color1[2] * w1 + color2[2] * w2)
+    ];
+
+    function componentToHex(c) {
+        var hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex([r, g, b]) {
+        return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+
+    return rgbToHex(rgb);
+}
 /**================================================================================================
  *                                         SECTION MATH
  *================================================================================================**/
@@ -171,6 +193,10 @@ function computeCount({
     return reference / angle
 }
 
+function computeFrameRate(imgPerSecond) {
+    return SECOND / imgPerSecond;
+}
+
 /**================================================================================================
  *                                         SECTION DATA
  *================================================================================================**/
@@ -182,8 +208,6 @@ function computeCount({
  * @return {*} 
  */
 function getData({
-    width,
-    height,
     reference = REFERENCE_DATA
 }) {
     /**========================================================================
@@ -193,7 +217,7 @@ function getData({
      *   
      *
      *========================================================================**/
-    return REFERENCE_DATA
+    return reference
 }
 
 /**================================================================================================
@@ -216,14 +240,12 @@ function flushScene(svg) {
  * @param {*} {width=WIDTH, height=HEIGHT, svg, angle, count}
  */
 function drawFrame({
-    width = WIDTH,
-    height = HEIGHT,
     svg,
     angle,
     count
 }) {
     flushScene(svg);
-    getData(width, height).forEach(([O, A]) => {
+    getData(DEFAULT).forEach(([O, A]) => {
         draw({
             svg,
             O,
@@ -249,14 +271,14 @@ function initSVG({
     width = WIDTH,
     height = HEIGHT
 }) {
-    let svg = document.getElementById(svgID);
-    svg.setAttribute("width", width);
-    svg.setAttribute("height", height);
-    return svg;
+    global.svg = document.getElementById(svgID);
+    global.svg.setAttribute("width", width);
+    global.svg.setAttribute("height", height);
 }
 
 function stopAnimation() {
-    clearInterval(interval);
+    ANIMATION_MODE = false
+    clearInterval(global.interval);
 }
 
 function checkOrStopAnimation(runConditions) {
@@ -265,117 +287,110 @@ function checkOrStopAnimation(runConditions) {
     }
 }
 
-/**================================================================================================
- *                                         SECTION MAIN
- *================================================================================================**/
 
-const WIDTH = 600
-const HEIGHT = 600
-const STARTING_ANGLE = 1
-const IMG_PER_SECOND = 25
-const DELTA = 0.001
-const SVG_ID = "tagSVG"
-const DEBUG_MODE = true
-const ANIMATION_MODE = true
-const MAX_FRAME = 1000
-const RIGHT_ANGLE = 90
-const SEMI_RIGHT_ANGLE = 45
-const REFERENCE_ANGLE = SEMI_RIGHT_ANGLE
-const TOP_RIGHT = {
-    x: WIDTH,
-    y: 0
-};
-const TOP_LEFT = {
-    x: 0,
-    y: 0
-};
-const BOTTOM_LEFT = {
-    x: 0,
-    y: HEIGHT
-};
-const BOTTOM_RIGHT = {
-    x: WIDTH,
-    y: HEIGHT
-};
-const SQUARE = [
-    [TOP_LEFT, BOTTOM_LEFT],
-    [BOTTOM_LEFT, BOTTOM_RIGHT],
-    [BOTTOM_RIGHT, TOP_RIGHT],
-    [TOP_RIGHT, TOP_LEFT]
-];
-const DIAGONAL = [
-    [TOP_LEFT, BOTTOM_RIGHT],
-    [BOTTOM_LEFT, TOP_RIGHT],
-    [BOTTOM_RIGHT, TOP_LEFT],
-    [TOP_RIGHT, BOTTOM_LEFT]
-]
-const REFERENCE_DATA = DIAGONAL
-
-let interval;
-
-/**
- * Paramètre et lance l'animation
- *
- * @param {*} {
- *     svgID = "tagSVG",
- *     width = 500,
- *     height = 500,
- *     angle = 10,
- *     imgPerSecond = 30
- * }
- */
-function run({
-    svgID = SVG_ID,
-    width = WIDTH,
-    height = HEIGHT,
-    angle = STARTING_ANGLE,
+function play({
     imgPerSecond = IMG_PER_SECOND,
+    angle = STARTING_ANGLE,
     delta = DELTA,
-    maxFrame = MAX_FRAME
+    currentFrame = 1
 }) {
-    let svg = initSVG({
-        svgID,
-        width,
-        height
-    });
+    ANIMATION_MODE = true;
 
-
-    if (ANIMATION_MODE) {
-        interval = setInterval(renderFrame, 1000 / imgPerSecond)
-    } else {
-        renderFrame()
-    }
-
-    function renderFrame() {
-        let count = computeCount({
-            angle
+    global.interval = setInterval(() => {
+        renderFrame({
+            angle,
+            currentFrame
         })
-        debug({
-            currentFrame: MAX_FRAME - maxFrame,
-            angle,
-            segmentsPerCorner: count,
-            svgID,
-            width,
-            height,
-            imgPerSecond,
-            delta
-        });
-        drawFrame({
-            svg,
-            angle,
-            count
-        });
-        checkOrStopAnimation([angle > 0, maxFrame--]);
-        angle -= delta;
-    }
+        angle -= delta
+        currentFrame++
+        checkOrStopAnimation([
+            currentFrame < MAX_FRAME
+        ])
+    }, computeFrameRate(imgPerSecond));
 }
 
+function renderFrame({
+    angle = STARTING_ANGLE,
+    currentFrame,
+    svg = global.svg
+}) {
+    let count = computeCount({
+        angle
+    })
+    debug({
+        currentFrame,
+        angle,
+        segmentsPerCorner: count
+    });
+    drawFrame({
+        svg,
+        angle,
+        count
+    });
+}
 
+/**================================================================================================
+ *                                         SECTION CONFIGURATION
+ *================================================================================================**/
 
-/**
- * Point d'entrée du programme
- *
- */
-function main() {
-    run({})
+let WIDTH = 250,
+    HEIGHT = 250,
+    STARTING_ANGLE = 1,
+    IMG_PER_SECOND = 25,
+    DELTA = 0.001,
+    SVG_ID = "tagSVG",
+    DEBUG_MODE = true,
+    ANIMATION_MODE = true,
+    COLOR_MODE = false,
+    REFERENCE_COLOR = 'black',
+    MAX_FRAME = 1000,
+    REFERENCE_ANGLE = 90,
+    SECOND = 1000,
+    TOP_RIGHT = {
+        x: WIDTH,
+        y: 0
+    },
+    TOP_LEFT = {
+        x: 0,
+        y: 0
+    },
+    BOTTOM_LEFT = {
+        x: 0,
+        y: HEIGHT
+    },
+    BOTTOM_RIGHT = {
+        x: WIDTH,
+        y: HEIGHT
+    },
+    SQUARE = [
+        [TOP_LEFT, BOTTOM_LEFT],
+        [BOTTOM_LEFT, BOTTOM_RIGHT],
+        [BOTTOM_RIGHT, TOP_RIGHT],
+        [TOP_RIGHT, TOP_LEFT]
+    ],
+    DIAGONAL = [
+        [TOP_LEFT, BOTTOM_RIGHT],
+        [BOTTOM_LEFT, TOP_RIGHT],
+        [BOTTOM_RIGHT, TOP_LEFT],
+        [TOP_RIGHT, BOTTOM_LEFT]
+    ],
+    DUAL = [
+        [TOP_LEFT, TOP_RIGHT].reverse(),
+        [BOTTOM_RIGHT, BOTTOM_LEFT].reverse(),
+    ],
+    MIX = [
+        [TOP_LEFT, BOTTOM_RIGHT],
+        [TOP_RIGHT, BOTTOM_LEFT],
+        [BOTTOM_LEFT, TOP_LEFT],
+        [BOTTOM_RIGHT, TOP_RIGHT],
+    ],
+    REFERENCE_DATA = SQUARE,
+    DEFAULT = {},
+    global = {
+        interval: undefined,
+        svg: undefined
+    };
+
+function init() {
+    initSVG(DEFAULT);
 }
