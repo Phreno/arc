@@ -1,10 +1,43 @@
+/**================================================================================================
+ *                                         SECTION DEBUG
+ *================================================================================================**/
+
+function trace(...args) {
+    if (DEBUG_MODE) {
+        console.log(args)
+    }
+}
+
+
+/**
+ * Construit un tableau dont les valeurs sont les index
+ *
+ * @param {*} count
+ * @return {*} 
+ */
+function range(count) {
+    return [...Array(count).keys()];
+}
+
+
 /**========================================================================
  * todo                             TODO
- *   -[ ] mieux controller la longueur des segments
- *   -[ ] corriger la densité
+ *  -[ ] mieux controller la longueur des segments
+ *  -[ ] corriger la densité
+ *  -[ ] gérer la création horaire/anti-horaire des rayons
  *========================================================================**/
 
-
+/**
+ * Dessine une ligne
+ *
+ * @param {*} {
+ *     svg,
+ *     O,
+ *     A,
+ *     color = "black"
+ * }
+ * @return {*} 
+ */
 function addLine({
     svg,
     O,
@@ -29,6 +62,18 @@ function addLine({
     return (l);
 }
 
+/**
+ * Dessine l'ensemble des lignes, 
+ * arquées autours d'un point de référence
+ *
+ * @param {*} {
+ *     svg,
+ *     O,
+ *     A,
+ *     angle,
+ *     count
+ * }
+ */
 function draw({
     svg,
     O,
@@ -36,62 +81,111 @@ function draw({
     angle,
     count
 }) {
-    var beta, xB, yB;
 
-    beta = angle * Math.PI / 180.0;
-
-    [...Array(count).keys()].forEach( ()=> {
-        xB = Math.round(O.x + (A.x - O.x) * Math.cos(beta) + (A.y - O.y) * Math.sin(beta));
-        yB = Math.round(O.y - (A.x - O.x) * Math.sin(beta) + (A.y - O.y) * Math.cos(beta));
+    range(count).reduce((A) => {
+        /* Dessine le segment OA */
         addLine({
             svg,
             O,
             A
         })
-        A.x = xB
-        A.y = yB
-    })
+        /* Prepare le dessin pour la prochaine itération */
+        return computeNextPoint({
+            O,
+            A,
+            beta: computeBeta(angle)
+        });
+    }, A);
+}
 
-    addLine({
-        svg,
-        O,
-        A
-    })
+function computeBeta(angle) {
+    return angle * Math.PI / 180.0;
+}
 
+/**
+ * Calcule le coordonnées du point B, 
+ * pour former un arc avec le segment OA
+ *
+ * @param {*} {
+ *     O,
+ *     A,
+ *     beta
+ * }
+ * @return {*} 
+ */
+function computeNextPoint({
+    O,
+    A,
+    beta
+}) {
+    /**========================================================================
+     * todo                             TODO
+     *   - [ ] Permettre une orientation horaire ou anti-horaire
+     *  - [ ] Controller la longueur du segment pour ne pas dépasser du carré
+     *   
+     *   
+     *
+     *========================================================================**/
+    let x = Math.round(O.x + (A.x - O.x) * Math.cos(beta) + (A.y - O.y) * Math.sin(beta));
+    let y = Math.round(O.y - (A.x - O.x) * Math.sin(beta) + (A.y - O.y) * Math.cos(beta));
+    return {
+        x,
+        y
+    };
 }
 
 
 
-function run({
-    svgID = "tagSVG",
-    width = 500,
-    height = 500,
-    angle = 10,
-    imgPerSecond = 30, 
-    density=180
-}) {
-    let svg = document.getElementById(svgID)
-    svg.setAttribute("width", width)
-    svg.setAttribute("height", height);
- 
-    density = density / angle
-    
+/**
+ * Calcul les coordonnées des points de références
+ * en fonction de la hauteur et de la largeur
+ *
+ * @return {*} 
+ */
+function getData(width, height) {
+    /**========================================================================
+     * todo                             TODO
+     *   - [ ] Moduler les données en fonction de le hauteur et de la largeur fournie
+     *   
+     *   
+     *
+     *========================================================================**/
+    return [
+        [TOP_LEFT, BOTTOM_LEFT],
+        [BOTTOM_LEFT, BOTTOM_RIGHT],
+        [BOTTOM_RIGHT, TOP_RIGHT],
+        [TOP_RIGHT, TOP_LEFT]
+    ];
+}
 
-    let interval = setInterval(renderFrame(), 1000/imgPerSecond)
+/**================================================================================================
+ *                                         SECTION ANIMATION
+ *================================================================================================**/
 
-    function renderFrame() {
-        return () => {
-            document.getElementById("angle").innerText = angle
-            renderScene(width, height, svg, angle, density);
-            angle -= 0.001;
-            if (angle < 0) {
-                clearInterval(interval);
-            }
-        };
+/**
+ * Supprime le contenu du svg
+ * pour laisser la place à la frame suivante
+ *
+ * @param {*} svg
+ */
+function flushScene(svg) {
+    while (svg.lastChild) {
+        svg.removeChild(svg.lastChild);
     }
 }
 
-function renderScene(width, height, svg, angle, count) {
+/**
+ * Construit la frame courante
+ *
+ * @param {*} {width=WIDTH, height=HEIGHT, svg, angle, count}
+ */
+function drawFrame({
+    width = WIDTH,
+    height = HEIGHT,
+    svg,
+    angle,
+    count
+}) {
     flushScene(svg);
     getData(width, height).forEach(([O, A]) => {
         draw({
@@ -104,51 +198,130 @@ function renderScene(width, height, svg, angle, count) {
     });
 }
 
-function flushScene(svg) {
-    while (svg.lastChild) {
-        svg.removeChild(svg.lastChild);
+/**
+ * Vérifie que l'ouverture de l'angle courant soit 
+ * toujours positive, sinon on arrête l'animation
+ *
+ * @param {*} angle
+ * @param {*} interval
+ */
+function checkOrHalt(angle, interval) {
+    if (angle < 0) {
+        clearInterval(interval);
     }
 }
 
-function getData(width, height) {
-    return [
-        [{
-                x: 0,
-                y: 0
-            },
-            {
-                x: -width,
-                y: height * 2
-            }
-        ],
+/**
+ * Affiche l'ouverture actuelle de l'angle sur l'interface
+ *
+ * @param {*} angle
+ */
+function displayAngle(angle) {
+    document.getElementById("angle").innerText = angle.toFixed(3);
+}
 
-        [{
-                x: 0,
-                y: height
-            },
-            {
-                x: width * 2,
-                y: height * 2
-            }
-        ],
+/**
+ * Focus sur le dom et initialise la taille du SVG
+ *
+ * @param {*} {
+ *     svgID = SVG_ID,
+ *     width = WIDTH,
+ *     height = HEIGHT
+ * }
+ * @return {*} 
+ */
+function initSVG({
+    svgID = SVG_ID,
+    width = WIDTH,
+    height = HEIGHT
+}) {
+    let svg = document.getElementById(svgID);
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", height);
+    return svg;
+}
 
-        [{
-                x: width,
-                y: height
-            },
-            {
-                x: width * 2,
-                y: -height
-            }
-        ],
-        [{
-                x: width,
-                y: 0
-            },
-            {
-                x: -width,
-                y: -height
-            }
-        ]
-    ];
+/**================================================================================================
+ *                                         SECTION MAIN
+ *================================================================================================**/
+
+const WIDTH = 500
+const HEIGHT = 500
+const STARTING_ANGLE = 1
+const IMG_PER_SECOND = 30
+const DENSITY = 10
+const DELTA = 0.001
+const SVG_ID = "tagSVG"
+const DEBUG_MODE = true
+const ANIMATION_MODE = true
+const TOP_RIGHT = {
+    x: WIDTH,
+    y: 0
+};
+const TOP_LEFT = {
+    x: 0,
+    y: 0
+};
+const BOTTOM_LEFT = {
+    x: 0,
+    y: HEIGHT
+};
+const BOTTOM_RIGHT = {
+    x: WIDTH,
+    y: HEIGHT
+};
+
+let interval;
+
+/**
+ * Paramètre et lance l'animation
+ *
+ * @param {*} {
+ *     svgID = "tagSVG",
+ *     width = 500,
+ *     height = 500,
+ *     angle = 10,
+ *     imgPerSecond = 30,
+ *     density = 180
+ * }
+ */
+function main({
+    svgID = SVG_ID,
+    width = WIDTH,
+    height = HEIGHT,
+    angle = STARTING_ANGLE,
+    imgPerSecond = IMG_PER_SECOND,
+    density = DENSITY,
+    delta = DELTA
+}) {
+    let svg = initSVG({
+        svgID,
+        width,
+        height
+    });
+    /**========================================================================
+     * todo                             TODO
+     *   - [ ] Corriger la densité
+     *   * Le nombre de segment a afficher doit occuper un angle de 90 degrés   
+     *   
+     *
+     *========================================================================**/
+    density = density / angle
+
+    if (ANIMATION_MODE) {
+        interval = setInterval(renderFrame, 1000 / imgPerSecond)
+    } else {
+        renderFrame()
+    }
+
+    function renderFrame() {
+        displayAngle(angle);
+        drawFrame({
+            svg,
+            angle,
+            density
+        });
+        checkOrHalt(angle, interval);
+        angle -= delta;
+    }
 }
