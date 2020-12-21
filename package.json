@@ -1,0 +1,21 @@
+{
+  "name": "arc",
+  "version": "1.0.0",
+  "description": "[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/Phreno/arc)",
+  "scripts": {
+    "start": "npx http-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Phreno/arc.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Phreno/arc/issues"
+  },
+  "homepage": "https://github.com/Phreno/arc#readme",
+  "devDependencies": {
+    "http-server": "^0.12.3"
+  }
+}

@@ -48,8 +48,23 @@ function convertCentimeterToPixel(cm) {
   return cm / PIXEL_PER_CM
 }
 
+function uploadFrame(stringData = global.svg.innerHTML, prefix = "export") {
+  uploadFile(prefix, generateSVGFile({ stringData }));
+}
 
 
+function uploadFile(prefix, svgData) {
+  const link = document.createElement("a");
+  link.setAttribute("download", `${prefix}.svg`);
+  link.setAttribute("href", `data:image/svg+xml; charset=UTF-8,%EF%BB%BF${encodeURI(svgData)}`);
+  link.setAttribute("target", "_blank");
+  document.body.appendChild(link);
+  link.click();
+}
+
+function generateSVGFile({ stringData, width = WIDTH, height = HEIGHT }) {
+  return `<?xml version="1.0" standalone="no"?><svg width="${SIZE_CM}cm" height="${SIZE_CM}cm" version="1.1" xmlns="http://www.w3.org/2000/svg">${stringData}</svg>`;
+}
 
 /**================================================================================================
  *                                         SECTION DRAWING
@@ -341,8 +356,7 @@ function renderFrame({
  *                                         SECTION CONFIGURATION
  *================================================================================================**/
 
-let WIDTH = convertCentimeterToPixel(20),
-  HEIGHT = convertCentimeterToPixel(20),
+let
   STARTING_ANGLE = 1,
   IMG_PER_SECOND = 25,
   DELTA = 0.001,
@@ -355,6 +369,9 @@ let WIDTH = convertCentimeterToPixel(20),
   REFERENCE_ANGLE = 90,
   SECOND = 1000,
   PIXEL_PER_CM = 0.0264583333,
+  SIZE_CM = 20,
+  WIDTH = convertCentimeterToPixel(SIZE_CM),
+  HEIGHT = convertCentimeterToPixel(SIZE_CM),
   TOP_RIGHT = {
     x: WIDTH,
     y: 0
