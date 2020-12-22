@@ -2,12 +2,6 @@
  *                                         SECTION DEBUG
  *================================================================================================**/
 
-function trace(...args) {
-    if (DEBUG_MODE) {
-        console.log(args)
-    }
-}
-
 /**
  * Affiche l'ouverture actuelle de l'angle sur l'interface
  *
@@ -48,34 +42,64 @@ function convertCentimeterToPixel(cm) {
     return cm / PIXEL_PER_CM
 }
 
-function uploadFrame(stringData = global.svg.innerHTML, prefix = "export") {
+function uploadFrame(rawXmlData = global.svg.innerHTML, prefix = "export") {
     uploadFile(prefix, generateSVGFile({
-        stringData
+        rawXmlData
     }));
 }
 
 
 function uploadFile(prefix, svgData) {
     const link = document.createElement("a");
-    link.setAttribute("download", `${prefix}.svg`);
-    link.setAttribute("href", `data:image/svg+xml; charset=UTF-8,%EF%BB%BF${encodeURI(svgData)}`);
-    link.setAttribute("target", "_blank");
+    getLinkAttributes({
+        prefix,
+        svgData
+    }).forEach(([attr, val]) => link.setAttribute(attr, val))
     document.body.appendChild(link);
     link.click();
 }
 
+
+function getLinkAttributes({
+    prefix,
+    svgData,
+    target = '_blank'
+}) {
+    return [
+        ["download", getSVGFileName(prefix)],
+        ["href", surroundWithMetadata(svgData)],
+        ["target", target]
+    ];
+}
+
+function getSVGFileName(prefix) {
+    return `${prefix}.svg`;
+}
+
+function surroundWithMetadata(svgData) {
+    return `data:image/svg+xml; charset=UTF-8,%EF%BB%BF${encodeURI(svgData)}`;
+}
+
 function generateSVGFile({
-    stringData,
+    rawXmlData,
     width = WIDTH,
     height = HEIGHT
 }) {
-    return `<?xml version="1.0" standalone="no"?><svg width="${SIZE_CM}cm" height="${SIZE_CM}cm" version="1.1" xmlns="http://www.w3.org/2000/svg">${stringData}</svg>`;
+    return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
 }
 
 /**================================================================================================
  *                                         SECTION DRAWING
  *================================================================================================**/
-
+/**========================================================================
+ * todo                  Construire le dessin sur un canvas
+ *   Actuellement c'est un svg qui affiche les motifs d'interférence
+ * - [ ] laisser l'export en svg
+ * - [ ] transformer l'image SVG en canvas
+ *   
+ *   
+ *
+ *========================================================================**/
 /**
  * Dessine une ligne
  *
@@ -91,24 +115,41 @@ function addLine({
     svg,
     O,
     A,
-    color = "black"
+    color = REFERENCE_COLOR
 }) {
     var l;
 
     l = document.createElementNS("http://www.w3.org/2000/svg", "line");
 
-    [
-        ["x1", O.x + "px"],
-        ["y1", O.y + "px"],
-        ["x2", A.x + "px"],
-        ["y2", A.y + "px"],
-        ["stroke", color],
-        ["stroke-width", 0.4]
-    ].forEach(([att, val]) => l.setAttribute(att, val));
+    getLineAttributes({
+        O,
+        A,
+        color
+    }).forEach(([att, val]) => l.setAttribute(att, val));
 
 
     svg.appendChild(l);
     return (l);
+}
+
+function getLineAttributes({
+    O,
+    A,
+    color = REFERENCE_COLOR,
+    strokeWidth = REFERENCE_STROKE_WIDTH
+}) {
+    return [
+        ["x1", concatPixelUnit(O.x)],
+        ["y1", concatPixelUnit(O.y)],
+        ["x2", concatPixelUnit(A.x)],
+        ["y2", concatPixelUnit(A.y)],
+        ["stroke", color],
+        ["stroke-width", REFERENCE_STROKE_WIDTH]
+    ];
+}
+
+function concatPixelUnit(val) {
+    return val + "px";
 }
 
 /**
@@ -164,16 +205,12 @@ function draw({
 function computeNextPoint({
     O,
     A,
-    beta
+    beta,
+    clockwiseRotation = false
 }) {
-    /**========================================================================
-     * todo                             TODO
-     *   - [ ] Permettre une orientation horaire ou anti-horaire
-     *  - [ ] Controller la longueur du segment pour ne pas dépasser du carré
-     *   
-     *   
-     *
-     *========================================================================**/
+    if (clockwiseRotation) {
+        beta = -beta
+    }
     return {
         x: doSomeXMagic({
             O,
@@ -219,7 +256,7 @@ function computeCount({
 }
 
 function computeFrameRate(imgPerSecond) {
-    return SECOND / imgPerSecond;
+    return MS_IN_SECOND / imgPerSecond;
 }
 
 /**================================================================================================
@@ -235,13 +272,6 @@ function computeFrameRate(imgPerSecond) {
 function getData({
     reference = REFERENCE_DATA
 }) {
-    /**========================================================================
-     * todo                             TODO
-     *   - [ ] Moduler les données en fonction de le hauteur et de la largeur fournie
-     *   
-     *   
-     *
-     *========================================================================**/
     return reference
 }
 
@@ -302,7 +332,6 @@ function initSVG({
 }
 
 function stopAnimation() {
-    ANIMATION_MODE = false
     clearInterval(global.interval);
 }
 
@@ -319,8 +348,6 @@ function play({
     delta = DELTA,
     currentFrame = 1
 }) {
-    ANIMATION_MODE = true;
-
     global.interval = setInterval(() => {
         renderFrame({
             angle,
@@ -361,15 +388,14 @@ function renderFrame({
 let
     STARTING_ANGLE = 1,
     IMG_PER_SECOND = 20,
-    DELTA = 0.001,
+    DELTA = 0.002,
     SVG_ID = "tagSVG",
     DEBUG_MODE = true,
-    ANIMATION_MODE = true,
-    COLOR_MODE = false,
     REFERENCE_COLOR = 'black',
-    MAX_FRAME = 800,
+    REFERENCE_STROKE_WIDTH = 0.4,
+    MAX_FRAME = 400,
     REFERENCE_ANGLE = 90,
-    SECOND = 1000,
+    MS_IN_SECOND = 1000,
     PIXEL_PER_CM = 0.0264583333,
     SIZE_CM = 5,
     WIDTH = convertCentimeterToPixel(SIZE_CM),
@@ -416,22 +442,12 @@ let
         [BOTTOM_RIGHT, OFFSET.L2R.TOP_RIGHT],
         [TOP_RIGHT, OFFSET.L2R.TOP_LEFT]
     ],
-    DIAGONAL = [
-        [TOP_LEFT, BOTTOM_RIGHT],
-        [BOTTOM_LEFT, TOP_RIGHT],
-        [BOTTOM_RIGHT, TOP_LEFT],
-        [TOP_RIGHT, BOTTOM_LEFT]
-    ],
-    DUAL = [
-        [TOP_LEFT, TOP_RIGHT].reverse(),
-        [BOTTOM_RIGHT, BOTTOM_LEFT].reverse(),
-    ],
-    MIX = [
-        [TOP_LEFT, BOTTOM_RIGHT],
-        [TOP_RIGHT, BOTTOM_LEFT],
-        [BOTTOM_LEFT, TOP_LEFT],
-        [BOTTOM_RIGHT, TOP_RIGHT],
-    ],
+    /**========================================================================
+     * todo          Agrandir les configuration de départ disponible
+     *   Proposer différentes forme géométrique
+     * - [ ] triangle
+     * - [ ] hexagone
+     *========================================================================**/
     REFERENCE_DATA = SQUARE,
     DEFAULT = {},
     global = {
