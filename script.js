@@ -1,3 +1,33 @@
+let
+    DEFAULT = {},
+    STARTING_ANGLE = 1,
+    IMG_PER_SECOND = 10,
+    DELTA = 0.002,
+    SVG_ID = "tagSVG",
+    DEBUG_PRECISION = 3,
+    REFERENCE_COLOR = 'black',
+    REFERENCE_STROKE_WIDTH = 0.4,
+    MAX_FRAME = 1000,
+    SQUARE_ANGLE = 90,
+    PENTAGRAM_ANGLE = 36,
+    TRIANGLE_ANGLE = 60,
+    HEXAGON_ANGLE = 120,
+    MS_IN_SECOND = 1000,
+    PIXEL_PER_CM = 0.0264583333,
+    REFERENCE_ANGLE = PENTAGRAM_ANGLE,
+    SIZE_CM = 15,
+    HEXAGON_WIDTH = computeHexagonWidthFromHeight(SIZE_CM),
+    PENTAGON_HEIGHT = computePentagonHeightFromWidth(SIZE_CM),
+    WIDTH = convertCentimeterToPixel(SIZE_CM),
+    HEIGHT = convertCentimeterToPixel(PENTAGON_HEIGHT),
+    global = {
+        interval: undefined,
+        svg: undefined
+    };
+
+
+
+
 /**================================================================================================
  *                                         SECTION DEBUG
  *================================================================================================**/
@@ -14,7 +44,7 @@ function debug(data) {
 
     function display(property) {
         return data[property].toFixed ?
-            data[property].toFixed(3) :
+            data[property].toFixed(DEBUG_PRECISION) :
             data[property]
 
     }
@@ -117,22 +147,18 @@ function addLine({
     A,
     color = REFERENCE_COLOR
 }) {
-    var l;
-
-    l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-
-    getLineAttributes({
-        O,
-        A,
-        color
-    }).forEach(([att, val]) => l.setAttribute(att, val));
-
-
-    svg.appendChild(l);
-    return (l);
+    if (svg) {
+        let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        getSVGLineAttributes({
+            O,
+            A,
+            color
+        }).forEach(([att, val]) => l.setAttribute(att, val));
+        svg.appendChild(l);
+    }
 }
 
-function getLineAttributes({
+function getSVGLineAttributes({
     O,
     A,
     color = REFERENCE_COLOR,
@@ -259,20 +285,15 @@ function computeFrameRate(imgPerSecond) {
     return MS_IN_SECOND / imgPerSecond;
 }
 
-/**================================================================================================
- *                                         SECTION DATA
- *================================================================================================**/
+function computeHexagonWidthFromHeight(height = SIZE_CM) {
+    return Math.sqrt(3) * height / 2;
+}
 
-/**
- * Calcul les coordonnées des points de références
- * en fonction de la hauteur et de la largeur
- *
- * @return {*} 
- */
-function getData({
-    reference = REFERENCE_DATA
-}) {
-    return reference
+function computePentagonHeightFromWidth(width = SIZE_CM) {
+    let c = width / 1.618,
+        R = c / 1.175,
+        a = 0.809 * R
+    return a + R
 }
 
 /**================================================================================================
@@ -331,8 +352,8 @@ function initSVG({
     global.svg.setAttribute("height", height);
 }
 
-function stopAnimation() {
-    clearInterval(global.interval);
+function stopAnimation(interval = global.interval) {
+    clearInterval(interval);
 }
 
 function checkOrStopAnimation(runConditions) {
@@ -381,80 +402,141 @@ function renderFrame({
     });
 }
 
+function init() {
+    initSVG(DEFAULT);
+}
+
 /**================================================================================================
- *                                         SECTION CONFIGURATION
+ *                                         SECTION DATA
  *================================================================================================**/
 
-let
-    STARTING_ANGLE = 1,
-    IMG_PER_SECOND = 20,
-    DELTA = 0.002,
-    SVG_ID = "tagSVG",
-    DEBUG_MODE = true,
-    REFERENCE_COLOR = 'black',
-    REFERENCE_STROKE_WIDTH = 0.4,
-    MAX_FRAME = 400,
-    REFERENCE_ANGLE = 90,
-    MS_IN_SECOND = 1000,
-    PIXEL_PER_CM = 0.0264583333,
-    SIZE_CM = 5,
-    WIDTH = convertCentimeterToPixel(SIZE_CM),
-    HEIGHT = convertCentimeterToPixel(SIZE_CM),
-    TOP_RIGHT = {
+let POINT_TOP_RIGHT = {
         x: WIDTH,
         y: 0
     },
-    TOP_LEFT = {
+    POINT_TOP_LEFT = {
         x: 0,
         y: 0
     },
-    BOTTOM_LEFT = {
+    POINT_BOTTOM_LEFT = {
         x: 0,
         y: HEIGHT
     },
-    BOTTOM_RIGHT = {
+    POINT_BOTTOM_RIGHT = {
         x: WIDTH,
+        y: HEIGHT
+    },
+    POINT_TOP_HEXAGON = {
+        x: WIDTH / 2,
+        y: 0
+    },
+    POINT_LEFT_UP_HEXAGON = {
+        x: 0,
+        y: (1 / 4) * HEIGHT
+    },
+    POINT_LEFT_DOWN_HEXAGON = {
+        x: 0,
+        y: (3 / 4) * HEIGHT
+    },
+    POINT_RIGHT_UP_HEXAGON = {
+        x: WIDTH,
+        y: (1 / 4) * HEIGHT
+    },
+    POINT_RIGHT_DOWN_HEXAGON = {
+        x: WIDTH,
+        y: (3 / 4) * HEIGHT
+    },
+    POINT_BOTTOM_HEXAGON = {
+        x: WIDTH / 2,
+        y: HEIGHT
+    },
+    POINT_TOP_PENTAGON = {
+        x: WIDTH / 2,
+        y: 0
+    },
+    POINT_LEFT_UP_PENTAGON = {
+        x: 0,
+        y: HEIGHT - (1.118 * HEIGHT / 1.809)
+    },
+    POINT_RIGHT_UP_PENTAGON = {
+        x: WIDTH,
+        y: HEIGHT - (1.118 * HEIGHT / 1.809)
+    },
+    POINT_BOTTOM_LEFT_PENTAGON = {
+        x: (WIDTH - 1.175 * (WIDTH / 2)) / 2,
+        y: HEIGHT
+    },
+    POINT_BOTTOM_RIGHT_PENTAGON = {
+        x: 1.175 * (WIDTH / 2) + (WIDTH - 1.175 * (WIDTH / 2)) / 2,
         y: HEIGHT
     },
     OFFSET = {
         L2R: {
-            TOP_LEFT: {
+            POINT_TOP_LEFT: {
                 x: -WIDTH,
                 y: 0
             },
-            TOP_RIGHT: {
+            POINT_TOP_RIGHT: {
                 x: WIDTH,
                 y: -HEIGHT
             },
-            BOTTOM_LEFT: {
+            POINT_BOTTOM_LEFT: {
                 x: 0,
                 y: 2 * HEIGHT
             },
-            BOTTOM_RIGHT: {
+            POINT_BOTTOM_RIGHT: {
                 x: 2 * WIDTH,
                 y: HEIGHT
             },
         }
     },
     SQUARE = [
-        [TOP_LEFT, OFFSET.L2R.BOTTOM_LEFT],
-        [BOTTOM_LEFT, OFFSET.L2R.BOTTOM_RIGHT],
-        [BOTTOM_RIGHT, OFFSET.L2R.TOP_RIGHT],
-        [TOP_RIGHT, OFFSET.L2R.TOP_LEFT]
+        [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
+        [POINT_BOTTOM_LEFT, OFFSET.L2R.POINT_BOTTOM_RIGHT],
+        [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
+        [POINT_TOP_RIGHT, OFFSET.L2R.POINT_TOP_LEFT]
     ],
-    /**========================================================================
-     * todo          Agrandir les configuration de départ disponible
-     *   Proposer différentes forme géométrique
-     * - [ ] triangle
-     * - [ ] hexagone
-     *========================================================================**/
-    REFERENCE_DATA = SQUARE,
-    DEFAULT = {},
-    global = {
-        interval: undefined,
-        svg: undefined
-    };
-
-function init() {
-    initSVG(DEFAULT);
+    TRIANGLE = [
+        [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
+        [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
+        [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON]
+    ],
+    STAR = [
+        [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
+        [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
+        [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON],
+        [POINT_BOTTOM_HEXAGON, POINT_RIGHT_UP_HEXAGON],
+        [POINT_RIGHT_UP_HEXAGON, POINT_LEFT_UP_HEXAGON],
+        [POINT_LEFT_UP_HEXAGON, POINT_BOTTOM_HEXAGON]
+    ],
+    PENTAGRAM = [
+        [POINT_TOP_PENTAGON, POINT_BOTTOM_LEFT_PENTAGON],
+        [POINT_BOTTOM_LEFT_PENTAGON, POINT_RIGHT_UP_PENTAGON],
+        [POINT_RIGHT_UP_PENTAGON, POINT_LEFT_UP_PENTAGON],
+        [POINT_LEFT_UP_PENTAGON, POINT_BOTTOM_RIGHT_PENTAGON],
+        [POINT_BOTTOM_RIGHT_PENTAGON, POINT_TOP_PENTAGON],
+    ],
+    HEXAGON = [
+        [POINT_TOP_HEXAGON, POINT_LEFT_UP_HEXAGON],
+        [POINT_LEFT_UP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
+        [POINT_LEFT_DOWN_HEXAGON, POINT_BOTTOM_HEXAGON],
+        [POINT_BOTTOM_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
+        [POINT_RIGHT_DOWN_HEXAGON, POINT_RIGHT_UP_HEXAGON],
+        [POINT_RIGHT_UP_HEXAGON, POINT_TOP_HEXAGON],
+    ],
+    DUAL = [
+        [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
+        [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
+    ],
+    REFERENCE_DATA = PENTAGRAM;
+/**
+ * Calcul les coordonnées des points de références
+ * en fonction de la hauteur et de la largeur
+ *
+ * @return {*} 
+ */
+function getData({
+    reference = REFERENCE_DATA
+}) {
+    return reference
 }
