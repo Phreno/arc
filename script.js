@@ -16,10 +16,10 @@ let
     PIXEL_PER_CM = 0.0264583333,
     REFERENCE_ANGLE = PENTAGRAM_ANGLE,
     SIZE_CM = 15,
-    HEXAGON_WIDTH = computeHexagonWidthFromHeight(SIZE_CM),
-    PENTAGON_HEIGHT = computePentagonHeightFromWidth(SIZE_CM),
-    WIDTH = convertCentimeterToPixel(SIZE_CM),
-    HEIGHT = convertCentimeterToPixel(PENTAGON_HEIGHT),
+    HEXAGON_WIDTH_CM = computeHexagonWidthFromHeight(SIZE_CM),
+    PENTAGON_HEIGHT_CM = computePentagonHeightFromWidth(SIZE_CM),
+    WIDTH = convertCentimeterToPixel(HEXAGON_WIDTH_CM),
+    HEIGHT = convertCentimeterToPixel(SIZE_CM),
     global = {
         interval: undefined,
         svg: undefined
@@ -389,12 +389,12 @@ function renderFrame({
 }) {
     let count = computeCount({
         angle
-    })
-    debug({
+    });
+    debug(computeDebugData({
         currentFrame,
         angle,
-        segmentsPerCorner: count
-    });
+        count
+    }));
     drawFrame({
         svg,
         angle,
@@ -402,8 +402,31 @@ function renderFrame({
     });
 }
 
+function computeDebugData({
+    currentFrame,
+    angle,
+    count
+}) {
+    let debugData = {
+        currentFrame,
+        angle,
+        segmentsPerCorner: count,
+        computedAngle: angle * count,
+    };
+    REFERENCE_DATA.forEach(([O, A], i) => {
+        debugData[`O${getGreekLetterAtIndex(i)}`] = `(${O.x},${O.y})`;
+        debugData[`A${getGreekLetterAtIndex(i)}`] = `(${A.x},${A.y})`;
+    });
+    return debugData;
+}
+
+function getGreekLetterAtIndex(i) {
+    return String.fromCharCode(i + 945);
+}
+
 function init() {
     initSVG(DEFAULT);
+    renderFrame({});
 }
 
 /**================================================================================================
@@ -490,45 +513,72 @@ let POINT_TOP_RIGHT = {
             },
         }
     },
-    SQUARE = [
-        [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
-        [POINT_BOTTOM_LEFT, OFFSET.L2R.POINT_BOTTOM_RIGHT],
-        [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
-        [POINT_TOP_RIGHT, OFFSET.L2R.POINT_TOP_LEFT]
-    ],
-    TRIANGLE = [
-        [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
-        [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
-        [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON]
-    ],
-    STAR = [
-        [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
-        [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
-        [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON],
-        [POINT_BOTTOM_HEXAGON, POINT_RIGHT_UP_HEXAGON],
-        [POINT_RIGHT_UP_HEXAGON, POINT_LEFT_UP_HEXAGON],
-        [POINT_LEFT_UP_HEXAGON, POINT_BOTTOM_HEXAGON]
-    ],
-    PENTAGRAM = [
-        [POINT_TOP_PENTAGON, POINT_BOTTOM_LEFT_PENTAGON],
-        [POINT_BOTTOM_LEFT_PENTAGON, POINT_RIGHT_UP_PENTAGON],
-        [POINT_RIGHT_UP_PENTAGON, POINT_LEFT_UP_PENTAGON],
-        [POINT_LEFT_UP_PENTAGON, POINT_BOTTOM_RIGHT_PENTAGON],
-        [POINT_BOTTOM_RIGHT_PENTAGON, POINT_TOP_PENTAGON],
-    ],
-    HEXAGON = [
-        [POINT_TOP_HEXAGON, POINT_LEFT_UP_HEXAGON],
-        [POINT_LEFT_UP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
-        [POINT_LEFT_DOWN_HEXAGON, POINT_BOTTOM_HEXAGON],
-        [POINT_BOTTOM_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
-        [POINT_RIGHT_DOWN_HEXAGON, POINT_RIGHT_UP_HEXAGON],
-        [POINT_RIGHT_UP_HEXAGON, POINT_TOP_HEXAGON],
-    ],
-    DUAL = [
-        [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
-        [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
-    ],
-    REFERENCE_DATA = PENTAGRAM;
+    DATA = {
+        square: {
+            width: SIZE_CM,
+            height: SIZE_CM,
+            points: [
+                [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
+                [POINT_BOTTOM_LEFT, OFFSET.L2R.POINT_BOTTOM_RIGHT],
+                [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
+                [POINT_TOP_RIGHT, OFFSET.L2R.POINT_TOP_LEFT]
+            ]
+        },
+        triangle: {
+            width: HEXAGON_WIDTH_CM,
+            height: SIZE_CM,
+            points: [
+                [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
+                [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
+                [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON]
+            ]
+        },
+        star: {
+            width: HEXAGON_WIDTH_CM,
+            height: SIZE_CM,
+            points: [
+                [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
+                [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
+                [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON],
+                [POINT_BOTTOM_HEXAGON, POINT_RIGHT_UP_HEXAGON],
+                [POINT_RIGHT_UP_HEXAGON, POINT_LEFT_UP_HEXAGON],
+                [POINT_LEFT_UP_HEXAGON, POINT_BOTTOM_HEXAGON]
+            ]
+        },
+        pentagram: {
+            width: SIZE_CM,
+            height: PENTAGON_HEIGHT_CM,
+            points: [
+                [POINT_TOP_PENTAGON, POINT_BOTTOM_LEFT_PENTAGON],
+                [POINT_BOTTOM_LEFT_PENTAGON, POINT_RIGHT_UP_PENTAGON],
+                [POINT_RIGHT_UP_PENTAGON, POINT_LEFT_UP_PENTAGON],
+                [POINT_LEFT_UP_PENTAGON, POINT_BOTTOM_RIGHT_PENTAGON],
+                [POINT_BOTTOM_RIGHT_PENTAGON, POINT_TOP_PENTAGON],
+            ]
+        },
+        hexagon: {
+            width: HEXAGON_WIDTH_CM,
+            height: SIZE_CM,
+            points: [
+                [POINT_TOP_HEXAGON, POINT_LEFT_UP_HEXAGON],
+                [POINT_LEFT_UP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
+                [POINT_LEFT_DOWN_HEXAGON, POINT_BOTTOM_HEXAGON],
+                [POINT_BOTTOM_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
+                [POINT_RIGHT_DOWN_HEXAGON, POINT_RIGHT_UP_HEXAGON],
+                [POINT_RIGHT_UP_HEXAGON, POINT_TOP_HEXAGON],
+            ]
+        },
+        DUAL: {
+            width: SIZE_CM,
+            height: SIZE_CM,
+            points: [
+                [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
+                [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
+            ]
+        },
+    }
+
+REFERENCE_DATA = DATA.star.points;
 /**
  * Calcul les coordonnées des points de références
  * en fonction de la hauteur et de la largeur
