@@ -5,8 +5,9 @@ let
     DELTA = 0.002,
     SVG_ID = "tagSVG",
     DEBUG_PRECISION = 3,
-    REFERENCE_COLOR = 'black',
-    REFERENCE_STROKE_WIDTH = 0.4,
+    DRAW_COLOR = 'black',
+    STROKE_WIDTH = 0.4,
+    DATASET = 'pentagram',
     MAX_FRAME = 1000,
     SQUARE_ANGLE = 90,
     PENTAGRAM_ANGLE = 36,
@@ -16,10 +17,6 @@ let
     PIXEL_PER_CM = 0.0264583333,
     REFERENCE_ANGLE = PENTAGRAM_ANGLE,
     SIZE_CM = 15,
-    HEXAGON_WIDTH_CM = computeHexagonWidthFromHeight(SIZE_CM),
-    PENTAGON_HEIGHT_CM = computePentagonHeightFromWidth(SIZE_CM),
-    WIDTH = convertCentimeterToPixel(HEXAGON_WIDTH_CM),
-    HEIGHT = convertCentimeterToPixel(SIZE_CM),
     global = {
         interval: undefined,
         svg: undefined
@@ -61,7 +58,7 @@ function debug(data) {
  * @return {*} 
  */
 function range(count) {
-    return [...Array(Math.ceil(count)).keys()];
+    return [...Array(Math.trunc(count)).keys()];
 }
 
 function convertPixelToCentimeter(px) {
@@ -112,8 +109,8 @@ function surroundWithMetadata(svgData) {
 
 function generateSVGFile({
     rawXmlData,
-    width = WIDTH,
-    height = HEIGHT
+    width = size.guessFromDataset(),
+    height = size.guessFromDataset()
 }) {
     return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
 }
@@ -145,7 +142,7 @@ function addLine({
     svg,
     O,
     A,
-    color = REFERENCE_COLOR
+    color = DRAW_COLOR
 }) {
     if (svg) {
         let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -161,8 +158,8 @@ function addLine({
 function getSVGLineAttributes({
     O,
     A,
-    color = REFERENCE_COLOR,
-    strokeWidth = REFERENCE_STROKE_WIDTH
+    color = DRAW_COLOR,
+    strokeWidth = STROKE_WIDTH
 }) {
     return [
         ["x1", concatPixelUnit(O.x)],
@@ -170,7 +167,7 @@ function getSVGLineAttributes({
         ["x2", concatPixelUnit(A.x)],
         ["y2", concatPixelUnit(A.y)],
         ["stroke", color],
-        ["stroke-width", REFERENCE_STROKE_WIDTH]
+        ["stroke-width", STROKE_WIDTH]
     ];
 }
 
@@ -307,7 +304,9 @@ function computePentagonHeightFromWidth(width = SIZE_CM) {
  * @param {*} svg
  */
 function flushScene(svg) {
-    svg.innerHTML = ''
+    if (svg) {
+        svg.innerHTML = ''
+    }
 }
 
 /**
@@ -316,12 +315,12 @@ function flushScene(svg) {
  * @param {*} {width=WIDTH, height=HEIGHT, svg, angle, count}
  */
 function drawFrame({
-    svg,
+    svg = global.svg,
     angle,
     count
 }) {
     flushScene(svg);
-    getData(DEFAULT).forEach(([O, A]) => {
+    new Data().getInstance().getData().forEach(([O, A]) => {
         draw({
             svg,
             O,
@@ -343,8 +342,8 @@ function drawFrame({
  */
 function initSVG({
     svgID = SVG_ID,
-    width = WIDTH,
-    height = HEIGHT
+    width,
+    height
 }) {
     global.svg = document.getElementById(svgID);
     global.svg.setAttribute("width", width);
@@ -368,7 +367,7 @@ function play({
     delta = DELTA,
     currentFrame = 1
 }) {
-    global.interval = setInterval(() => {
+    global.interval = setInterval(function playAnimation() {
         renderFrame({
             angle,
             currentFrame
@@ -384,18 +383,19 @@ function play({
 function renderFrame({
     angle = STARTING_ANGLE,
     currentFrame = 0,
-    svg = global.svg
 }) {
     let count = computeCount({
         angle
     });
+    if(!global.svg){
+        initSVG(size.guessFromDataset());
+    }
     debug(computeDebugData({
         currentFrame,
         angle,
         count
     }));
     drawFrame({
-        svg,
         angle,
         count
     });
@@ -412,7 +412,7 @@ function computeDebugData({
         segmentsPerCorner: count,
         computedAngle: angle * count,
     };
-    REFERENCE_DATA.forEach(([O, A], i) => {
+    new Data().getInstance().getData().forEach(([O, A], i) => {
         debugData[`O${getGreekLetterAtIndex(i)}`] = `(${O.x},${O.y})`;
         debugData[`A${getGreekLetterAtIndex(i)}`] = `(${A.x},${A.y})`;
     });
@@ -423,9 +423,8 @@ function getGreekLetterAtIndex(i) {
     return String.fromCharCode(i + 945);
 }
 
-function init() {
-    initSVG(DEFAULT);
-    renderFrame({});
+function init(dataset = DATASET) {
+
 }
 
 /**================================================================================================
@@ -435,8 +434,8 @@ function init() {
 let point = {
     square: {
         gamma: function getSquareGamma({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width,
@@ -445,8 +444,8 @@ let point = {
         },
 
         beta: function getSquareBeta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: 0,
@@ -455,8 +454,8 @@ let point = {
         },
 
         alpha: function getSquareAlpha({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: 0,
@@ -465,8 +464,8 @@ let point = {
         },
 
         delta: function getSquareDelta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width,
@@ -475,8 +474,8 @@ let point = {
         },
         offset: {
             epsilon: function getSquareEpsilonOffset({
-                width = WIDTH,
-                height = HEIGHT
+                width = size.guessFromDataset(),
+                height = size.guessFromDataset()
             }) {
                 return {
                     x: 2 * width,
@@ -484,8 +483,8 @@ let point = {
                 };
             },
             gamma: function getSquareGammaOffset({
-                width = WIDTH,
-                height = HEIGHT
+                width = size.guessFromDataset(),
+                height = size.guessFromDataset()
             }) {
                 return {
                     x: 0,
@@ -493,8 +492,8 @@ let point = {
                 };
             },
             beta: function getSquareBetaOffset({
-                width = WIDTH,
-                height = HEIGHT
+                width = size.guessFromDataset(),
+                height = size.guessFromDataset()
             }) {
                 return {
                     x: width,
@@ -502,8 +501,8 @@ let point = {
                 };
             },
             alpha: function getSquareAlphaOffset({
-                width = WIDTH,
-                height = HEIGHT
+                width = size.guessFromDataset(),
+                height = size.guessFromDataset()
             }) {
                 return {
                     x: -width,
@@ -514,8 +513,8 @@ let point = {
     },
     pentagon: {
         delta: function getPentagonDelta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: 1.175 * (width / 2) + (width - 1.175 * (width / 2)) / 2,
@@ -523,8 +522,8 @@ let point = {
             };
         },
         gamma: function getPentagonGamma({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: (width - 1.175 * (width / 2)) / 2,
@@ -532,8 +531,8 @@ let point = {
             };
         },
         epsilon: function getPentagonEpsilon({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width,
@@ -542,8 +541,8 @@ let point = {
         },
 
         beta: function getPentagonBeta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: 0,
@@ -552,8 +551,8 @@ let point = {
         },
 
         alpha: function getPentagonAlpha({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width / 2,
@@ -563,8 +562,8 @@ let point = {
     },
     hexagon: {
         delta: function getHexagonDelta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width / 2,
@@ -573,8 +572,8 @@ let point = {
         },
 
         epsilon: function getHexagonEpsilon({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width,
@@ -583,8 +582,8 @@ let point = {
         },
 
         zeta: function getHexagonZeta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width,
@@ -593,8 +592,8 @@ let point = {
         },
 
         gamma: function getHexagonGamma({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: 0,
@@ -603,8 +602,8 @@ let point = {
         },
 
         beta: function getHexagonBeta({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: 0,
@@ -612,8 +611,8 @@ let point = {
             };
         },
         alpha: function getHexagonAlpha({
-            width = WIDTH,
-            height = HEIGHT
+            width = size.guessFromDataset(),
+            height = size.guessFromDataset()
         }) {
             return {
                 x: width / 2,
@@ -624,11 +623,10 @@ let point = {
 }
 
 let paths = {
-
     line: function getLinePaths({
-        width = WIDTH,
-        height = HEIGHT
-    }) {
+        width,
+        height
+    } = size.guessFromDataset()) {
         return [
             [point.square.alpha({
                 width,
@@ -648,9 +646,9 @@ let paths = {
     },
 
     hexagon: function getHexagonPaths({
-        width = WIDTH,
-        height = HEIGHT
-    }) {
+        width,
+        height
+    } = size.guessFromDataset()) {
         /**========================================================================
          * todo                             Gestion des chemins de l'hexagone
          *   Terminer le chemin sur le point adjacent n'est pas satisfaisant.
@@ -703,9 +701,9 @@ let paths = {
     },
 
     pentagram: function getPentagramPaths({
-        width = WIDTH,
-        height = HEIGHT
-    }) {
+        width,
+        height
+    } = size.guessFromDataset()) {
         return [
             [point.pentagon.alpha({
                 width,
@@ -746,9 +744,9 @@ let paths = {
     },
 
     star: function getStarPaths({
-        width = WIDTH,
-        height = HEIGHT
-    }) {
+        width,
+        height
+    } = size.guessFromDataset()) {
         return [
             [point.hexagon.alpha({
                 width,
@@ -796,9 +794,9 @@ let paths = {
     },
 
     triangle: function getTrianglePaths({
-        width = WIDTH,
-        height = HEIGHT
-    }) {
+        width,
+        height
+    } = size.guessFromDataset()) {
         return [
             [point.hexagon.alpha({
                 width,
@@ -825,9 +823,9 @@ let paths = {
     },
 
     square: function getSquarePaths({
-        width = WIDTH,
-        height = HEIGHT
-    }) {
+        width,
+        height
+    } = size.guessFromDataset()) {
         return [
             [point.square.alpha({
                 width,
@@ -862,14 +860,73 @@ let paths = {
 
 }
 
-/**
- * Calcul les coordonnées des points de références
- * en fonction de la hauteur et de la largeur
- *
- * @return {*} 
- */
-function getData({
-    reference = REFERENCE_DATA
-}) {
-    return reference
+let size = {
+    guessFromDataset: function (dataset = DATASET, sizeCM = SIZE_CM) {
+        let metaSet,
+            hexagon = ['hexagon', 'star', 'triangle'],
+            pentagon = ['pentagon', 'pentagram'],
+            square = ['square', 'line'];
+
+        if (hexagon.includes(dataset)) {
+            metaSet = hexagon.shift()
+        } else if (pentagon.includes(dataset)) {
+            metaSet = pentagon.shift()
+        } else if (square.includes(dataset)) {
+            metaSet = square.shift()
+        }
+        return size[metaSet](sizeCM)
+    },
+    square: function getSquareSize(size = SIZE_CM) {
+        return {
+            widthInCentimeter: size,
+            heightInCentimeter: size,
+            width: convertCentimeterToPixel(size),
+            height: convertCentimeterToPixel(size)
+        }
+    },
+    hexagon: function getHexagonSize(size = SIZE_CM) {
+        let widthInCentimeter = computeHexagonWidthFromHeight(size)
+        return {
+            widthInCentimeter,
+            heightInCentimeter: size,
+            width: convertCentimeterToPixel(widthInCentimeter),
+            height: convertCentimeterToPixel(size)
+        }
+    },
+    pentagon: function getPentagonSize(size = SIZE_CM) {
+        let heightInCentimeter = computePentagonHeightFromWidth(size)
+        return {
+            widthInCentimeter: size,
+            heightInCentimeter,
+            width: convertCentimeterToPixel(size),
+            height: convertCentimeterToPixel(heightInCentimeter)
+
+        }
+    }
 }
+
+/**================================================================================================
+ *                                         SECTION DATA MANAGER
+ *================================================================================================**/
+let Data = (function () {
+    let instance, _data = {};
+
+    function Singleton() {
+        if (instance) {
+            return instance;
+        }
+        instance = this;
+        instance.getData = function getDataFromDataset(dataset = DATASET)  {
+            if (!_data[dataset]) {
+                _data[dataset] = paths[dataset]()
+            }
+            return [..._data[dataset]]
+        }
+
+    }
+    Singleton.getInstance = function (dataset = DATASET) {
+        let self = instance || new Singleton()
+        return self
+    }
+    return Singleton;
+})
