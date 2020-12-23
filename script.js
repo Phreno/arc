@@ -337,8 +337,7 @@ function drawFrame({
  *
  * @param {*} {
  *     svgID = SVG_ID,
- *     width = WIDTH,
- *     height = HEIGHT
+ *     width = WIDTH,()
  * }
  * @return {*} 
  */
@@ -433,152 +432,436 @@ function init() {
  *                                         SECTION DATA
  *================================================================================================**/
 
-let POINT_TOP_RIGHT = {
-        x: WIDTH,
-        y: 0
-    },
-    POINT_TOP_LEFT = {
-        x: 0,
-        y: 0
-    },
-    POINT_BOTTOM_LEFT = {
-        x: 0,
-        y: HEIGHT
-    },
-    POINT_BOTTOM_RIGHT = {
-        x: WIDTH,
-        y: HEIGHT
-    },
-    POINT_TOP_HEXAGON = {
-        x: WIDTH / 2,
-        y: 0
-    },
-    POINT_LEFT_UP_HEXAGON = {
-        x: 0,
-        y: (1 / 4) * HEIGHT
-    },
-    POINT_LEFT_DOWN_HEXAGON = {
-        x: 0,
-        y: (3 / 4) * HEIGHT
-    },
-    POINT_RIGHT_UP_HEXAGON = {
-        x: WIDTH,
-        y: (1 / 4) * HEIGHT
-    },
-    POINT_RIGHT_DOWN_HEXAGON = {
-        x: WIDTH,
-        y: (3 / 4) * HEIGHT
-    },
-    POINT_BOTTOM_HEXAGON = {
-        x: WIDTH / 2,
-        y: HEIGHT
-    },
-    POINT_TOP_PENTAGON = {
-        x: WIDTH / 2,
-        y: 0
-    },
-    POINT_LEFT_UP_PENTAGON = {
-        x: 0,
-        y: HEIGHT - (1.118 * HEIGHT / 1.809)
-    },
-    POINT_RIGHT_UP_PENTAGON = {
-        x: WIDTH,
-        y: HEIGHT - (1.118 * HEIGHT / 1.809)
-    },
-    POINT_BOTTOM_LEFT_PENTAGON = {
-        x: (WIDTH - 1.175 * (WIDTH / 2)) / 2,
-        y: HEIGHT
-    },
-    POINT_BOTTOM_RIGHT_PENTAGON = {
-        x: 1.175 * (WIDTH / 2) + (WIDTH - 1.175 * (WIDTH / 2)) / 2,
-        y: HEIGHT
-    },
-    OFFSET = {
-        L2R: {
-            POINT_TOP_LEFT: {
-                x: -WIDTH,
-                y: 0
-            },
-            POINT_TOP_RIGHT: {
-                x: WIDTH,
-                y: -HEIGHT
-            },
-            POINT_BOTTOM_LEFT: {
+let point = {
+    square: {
+        gamma: function getSquareGamma({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width,
+                y: height
+            };
+        },
+
+        beta: function getSquareBeta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
                 x: 0,
-                y: 2 * HEIGHT
+                y: height
+            };
+        },
+
+        alpha: function getSquareAlpha({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: 0,
+                y: 0
+            };
+        },
+
+        delta: function getSquareDelta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width,
+                y: 0
+            };
+        },
+        offset: {
+            epsilon: function getSquareEpsilonOffset({
+                width = WIDTH,
+                height = HEIGHT
+            }) {
+                return {
+                    x: 2 * width,
+                    y: height
+                };
             },
-            POINT_BOTTOM_RIGHT: {
-                x: 2 * WIDTH,
-                y: HEIGHT
+            gamma: function getSquareGammaOffset({
+                width = WIDTH,
+                height = HEIGHT
+            }) {
+                return {
+                    x: 0,
+                    y: 2 * height
+                };
             },
+            beta: function getSquareBetaOffset({
+                width = WIDTH,
+                height = HEIGHT
+            }) {
+                return {
+                    x: width,
+                    y: -height
+                };
+            },
+            alpha: function getSquareAlphaOffset({
+                width = WIDTH,
+                height = HEIGHT
+            }) {
+                return {
+                    x: -width,
+                    y: 0
+                };
+            }
         }
     },
-    DATA = {
-        square: {
-            width: SIZE_CM,
-            height: SIZE_CM,
-            points: [
-                [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
-                [POINT_BOTTOM_LEFT, OFFSET.L2R.POINT_BOTTOM_RIGHT],
-                [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
-                [POINT_TOP_RIGHT, OFFSET.L2R.POINT_TOP_LEFT]
-            ]
+    pentagon: {
+        delta: function getPentagonDelta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: 1.175 * (width / 2) + (width - 1.175 * (width / 2)) / 2,
+                y: height
+            };
         },
-        triangle: {
-            width: HEXAGON_WIDTH_CM,
-            height: SIZE_CM,
-            points: [
-                [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
-                [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
-                [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON]
-            ]
+        gamma: function getPentagonGamma({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: (width - 1.175 * (width / 2)) / 2,
+                y: height
+            };
         },
-        star: {
-            width: HEXAGON_WIDTH_CM,
-            height: SIZE_CM,
-            points: [
-                [POINT_TOP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
-                [POINT_LEFT_DOWN_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
-                [POINT_RIGHT_DOWN_HEXAGON, POINT_TOP_HEXAGON],
-                [POINT_BOTTOM_HEXAGON, POINT_RIGHT_UP_HEXAGON],
-                [POINT_RIGHT_UP_HEXAGON, POINT_LEFT_UP_HEXAGON],
-                [POINT_LEFT_UP_HEXAGON, POINT_BOTTOM_HEXAGON]
-            ]
+        epsilon: function getPentagonEpsilon({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width,
+                y: height - (1.118 * height / 1.809)
+            };
         },
-        pentagram: {
-            width: SIZE_CM,
-            height: PENTAGON_HEIGHT_CM,
-            points: [
-                [POINT_TOP_PENTAGON, POINT_BOTTOM_LEFT_PENTAGON],
-                [POINT_BOTTOM_LEFT_PENTAGON, POINT_RIGHT_UP_PENTAGON],
-                [POINT_RIGHT_UP_PENTAGON, POINT_LEFT_UP_PENTAGON],
-                [POINT_LEFT_UP_PENTAGON, POINT_BOTTOM_RIGHT_PENTAGON],
-                [POINT_BOTTOM_RIGHT_PENTAGON, POINT_TOP_PENTAGON],
-            ]
+
+        beta: function getPentagonBeta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: 0,
+                y: height - (1.118 * height / 1.809)
+            };
         },
-        hexagon: {
-            width: HEXAGON_WIDTH_CM,
-            height: SIZE_CM,
-            points: [
-                [POINT_TOP_HEXAGON, POINT_LEFT_UP_HEXAGON],
-                [POINT_LEFT_UP_HEXAGON, POINT_LEFT_DOWN_HEXAGON],
-                [POINT_LEFT_DOWN_HEXAGON, POINT_BOTTOM_HEXAGON],
-                [POINT_BOTTOM_HEXAGON, POINT_RIGHT_DOWN_HEXAGON],
-                [POINT_RIGHT_DOWN_HEXAGON, POINT_RIGHT_UP_HEXAGON],
-                [POINT_RIGHT_UP_HEXAGON, POINT_TOP_HEXAGON],
-            ]
+
+        alpha: function getPentagonAlpha({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width / 2,
+                y: 0
+            };
+        }
+    },
+    hexagon: {
+        delta: function getHexagonDelta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width / 2,
+                y: height
+            };
         },
-        DUAL: {
-            width: SIZE_CM,
-            height: SIZE_CM,
-            points: [
-                [POINT_TOP_LEFT, OFFSET.L2R.POINT_BOTTOM_LEFT],
-                [POINT_BOTTOM_RIGHT, OFFSET.L2R.POINT_TOP_RIGHT],
-            ]
+
+        epsilon: function getHexagonEpsilon({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width,
+                y: (3 / 4) * height
+            };
         },
+
+        zeta: function getHexagonZeta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width,
+                y: (1 / 4) * height
+            };
+        },
+
+        gamma: function getHexagonGamma({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: 0,
+                y: (3 / 4) * height
+            };
+        },
+
+        beta: function getHexagonBeta({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: 0,
+                y: (1 / 4) * height
+            };
+        },
+        alpha: function getHexagonAlpha({
+            width = WIDTH,
+            height = HEIGHT
+        }) {
+            return {
+                x: width / 2,
+                y: 0
+            };
+        }
+    }
+}
+
+let paths = {
+
+    line: function getLinePaths({
+        width = WIDTH,
+        height = HEIGHT
+    }) {
+        return [
+            [point.square.alpha({
+                width,
+                height
+            }), point.square.gamma({
+                width,
+                height
+            })],
+            [point.square.gamma({
+                width,
+                height
+            }), point.square.alpha({
+                width,
+                height
+            })],
+        ];
+    },
+
+    hexagon: function getHexagonPaths({
+        width = WIDTH,
+        height = HEIGHT
+    }) {
+        /**========================================================================
+         * todo                             Gestion des chemins de l'hexagone
+         *   Terminer le chemin sur le point adjacent n'est pas satisfaisant.
+         * - [ ]  prolonger le segment de façon à ce que les arc de cercle couvrent l'hexagone
+         *========================================================================**/
+        return [
+            [point.hexagon.alpha({
+                width,
+                height
+            }), point.hexagon.beta({
+                width,
+                height
+            })],
+            [point.hexagon.beta({
+                width,
+                height
+            }), point.hexagon.gamma({
+                width,
+                height
+            })],
+            [point.hexagon.gamma({
+                width,
+                height
+            }), point.hexagon.delta({
+                width,
+                height
+            })],
+            [point.hexagon.delta({
+                width,
+                height
+            }), point.hexagon.epsilon({
+                width,
+                height
+            })],
+            [point.hexagon.epsilon({
+                width,
+                height
+            }), point.hexagon.zeta({
+                width,
+                height
+            })],
+            [point.hexagon.zeta({
+                width,
+                height
+            }), point.hexagon.alpha({
+                width,
+                height
+            })],
+        ];
+    },
+
+    pentagram: function getPentagramPaths({
+        width = WIDTH,
+        height = HEIGHT
+    }) {
+        return [
+            [point.pentagon.alpha({
+                width,
+                height
+            }), point.pentagon.gamma({
+                width,
+                height
+            })],
+            [point.pentagon.gamma({
+                width,
+                height
+            }), point.pentagon.epsilon({
+                width,
+                height
+            })],
+            [point.pentagon.epsilon({
+                width,
+                height
+            }), point.pentagon.beta({
+                width,
+                height
+            })],
+            [point.pentagon.beta({
+                width,
+                height
+            }), point.pentagon.delta({
+                width,
+                height
+            })],
+            [point.pentagon.delta({
+                width,
+                height
+            }), point.pentagon.alpha({
+                width,
+                height
+            })],
+        ];
+    },
+
+    star: function getStarPaths({
+        width = WIDTH,
+        height = HEIGHT
+    }) {
+        return [
+            [point.hexagon.alpha({
+                width,
+                height
+            }), point.hexagon.gamma({
+                width,
+                height
+            })],
+            [point.hexagon.gamma({
+                width,
+                height
+            }), point.hexagon.epsilon({
+                width,
+                height
+            })],
+            [point.hexagon.epsilon({
+                width,
+                height
+            }), point.hexagon.alpha({
+                width,
+                height
+            })],
+            [point.hexagon.beta({
+                width,
+                height
+            }), point.hexagon.delta({
+                width,
+                height
+            })],
+            [point.hexagon.delta({
+                width,
+                height
+            }), point.hexagon.zeta({
+                width,
+                height
+            })],
+            [point.hexagon.zeta({
+                width,
+                height
+            }), point.hexagon.alpha({
+                width,
+                height
+            })]
+        ];
+    },
+
+    triangle: function getTrianglePaths({
+        width = WIDTH,
+        height = HEIGHT
+    }) {
+        return [
+            [point.hexagon.alpha({
+                width,
+                height
+            }), point.hexagon.gamma({
+                width,
+                height
+            })],
+            [point.hexagon.gamma({
+                width,
+                height
+            }), point.hexagon.epsilon({
+                width,
+                height
+            })],
+            [point.hexagon.epsilon({
+                width,
+                height
+            }), point.hexagon.alpha({
+                width,
+                height
+            })]
+        ];
+    },
+
+    square: function getSquarePaths({
+        width = WIDTH,
+        height = HEIGHT
+    }) {
+        return [
+            [point.square.alpha({
+                width,
+                height
+            }), point.square.offset.beta({
+                width,
+                height
+            })],
+            [point.square.beta({
+                width,
+                height
+            }), point.square.offset.gamma({
+                width,
+                height
+            })],
+            [point.square.gamma({
+                width,
+                height
+            }), point.square.offset.delta({
+                width,
+                height
+            })],
+            [point.square.delta({
+                width,
+                height
+            }), point.square.offset.epsilon({
+                width,
+                height
+            })],
+        ];
     }
 
-REFERENCE_DATA = DATA.star.points;
+}
+
 /**
  * Calcul les coordonnées des points de références
  * en fonction de la hauteur et de la largeur
