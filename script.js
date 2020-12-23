@@ -47,6 +47,25 @@ function debug(data) {
     }
 }
 
+function computeDebugData({
+    currentFrame,
+    angle,
+    count
+}) {
+    let debugData = {
+        currentFrame,
+        angle,
+        segmentsPerCorner: count,
+        computedAngle: angle * count,
+    };
+    Data.getFromDataset().forEach(([O, A], i) => {
+        debugData[`O${getGreekLetterAtIndex(i)}`] = `(${O.x},${O.y})`;
+        debugData[`A${getGreekLetterAtIndex(i)}`] = `(${A.x},${A.y})`;
+    });
+    return debugData;
+}
+
+
 /**================================================================================================
  *                                         SECTION TOOLS
  *================================================================================================**/
@@ -58,7 +77,7 @@ function debug(data) {
  * @return {*} 
  */
 function range(count) {
-    return [...Array(Math.trunc(count)).keys()];
+    return [...Array(Math.floor(count)).keys()];
 }
 
 function convertPixelToCentimeter(px) {
@@ -69,6 +88,17 @@ function convertCentimeterToPixel(cm) {
     return cm / PIXEL_PER_CM
 }
 
+function getGreekLetterAtIndex(i) {
+    return String.fromCharCode(i + 945);
+}
+
+
+function concatPixelUnit(val) {
+    return val + "px";
+}
+/**================================================================================================
+ *                                         SECTION UPLOAD
+ *================================================================================================**/
 function uploadFrame(rawXmlData = global.svg.innerHTML, prefix = "export") {
     uploadFile(prefix, generateSVGFile({
         rawXmlData
@@ -94,7 +124,7 @@ function getLinkAttributes({
 }) {
     return [
         ["download", getSVGFileName(prefix)],
-        ["href", surroundWithMetadata(svgData)],
+        ["href", surroundWithSVGMetadata(svgData)],
         ["target", target]
     ];
 }
@@ -103,113 +133,13 @@ function getSVGFileName(prefix) {
     return `${prefix}.svg`;
 }
 
-function surroundWithMetadata(svgData) {
+function surroundWithSVGMetadata(svgData) {
     return `data:image/svg+xml; charset=UTF-8,%EF%BB%BF${encodeURI(svgData)}`;
 }
 
-function generateSVGFile({
-    rawXmlData,
-    width = size.guessFromDataset(),
-    height = size.guessFromDataset()
-}) {
-    return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
-}
 
-/**================================================================================================
- *                                         SECTION DRAWING
- *================================================================================================**/
-/**========================================================================
- * todo                  Construire le dessin sur un canvas
- *   Actuellement c'est un svg qui affiche les motifs d'interférence
- * - [ ] laisser l'export en svg
- * - [ ] transformer l'image SVG en canvas
- *   
- *   
- *
- *========================================================================**/
-/**
- * Dessine une ligne
- *
- * @param {*} {
- *     svg,
- *     O,
- *     A,
- *     color = "black"
- * }
- * @return {*} 
- */
-function addLine({
-    svg,
-    O,
-    A,
-    color = DRAW_COLOR
-}) {
-    if (svg) {
-        let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        getSVGLineAttributes({
-            O,
-            A,
-            color
-        }).forEach(([att, val]) => l.setAttribute(att, val));
-        svg.appendChild(l);
-    }
-}
 
-function getSVGLineAttributes({
-    O,
-    A,
-    color = DRAW_COLOR,
-    strokeWidth = STROKE_WIDTH
-}) {
-    return [
-        ["x1", concatPixelUnit(O.x)],
-        ["y1", concatPixelUnit(O.y)],
-        ["x2", concatPixelUnit(A.x)],
-        ["y2", concatPixelUnit(A.y)],
-        ["stroke", color],
-        ["stroke-width", STROKE_WIDTH]
-    ];
-}
 
-function concatPixelUnit(val) {
-    return val + "px";
-}
-
-/**
- * Dessine l'ensemble des lignes, 
- * arquées autours d'un point de référence
- *
- * @param {*} {
- *     svg,
- *     O,
- *     A,
- *     angle,
- *     count
- * }
- */
-function draw({
-    svg,
-    O,
-    A,
-    angle,
-    count
-}) {
-
-    range(count).reduce((A, _, i) => {
-        /* Dessine le segment OA */
-        addLine({
-            svg,
-            O,
-            A
-        })
-        /* Prepare le dessin pour la prochaine itération */
-        return computeNextPoint({
-            O,
-            A,
-            beta: computeBeta(angle)
-        });
-    }, A);
-}
 
 /**================================================================================================
  *                                         SECTION MATH
@@ -320,7 +250,7 @@ function drawFrame({
     count
 }) {
     flushScene(svg);
-    new Data().getInstance().getData().forEach(([O, A]) => {
+    Data.getFromDataset().forEach(([O, A]) => {
         draw({
             svg,
             O,
@@ -331,24 +261,6 @@ function drawFrame({
     });
 }
 
-/**
- * Focus sur le dom et initialise la taille du SVG
- *
- * @param {*} {
- *     svgID = SVG_ID,
- *     width = WIDTH,()
- * }
- * @return {*} 
- */
-function initSVG({
-    svgID = SVG_ID,
-    width,
-    height
-}) {
-    global.svg = document.getElementById(svgID);
-    global.svg.setAttribute("width", width);
-    global.svg.setAttribute("height", height);
-}
 
 function stopAnimation(interval = global.interval) {
     clearInterval(interval);
@@ -387,7 +299,7 @@ function renderFrame({
     let count = computeCount({
         angle
     });
-    if(!global.svg){
+    if (!global.svg) {
         initSVG(size.guessFromDataset());
     }
     debug(computeDebugData({
@@ -401,34 +313,109 @@ function renderFrame({
     });
 }
 
-function computeDebugData({
-    currentFrame,
+
+
+/**================================================================================================
+ *                                         SECTION SVG
+ *================================================================================================**/
+
+function generateSVGFile({
+    rawXmlData,
+    width = size.guessFromDataset(),
+    height = size.guessFromDataset()
+}) {
+    return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
+}
+
+ /**
+ * Focus sur le dom et initialise la taille du SVG
+ *
+ * @param {*} {
+ *     svgID = SVG_ID,
+ *     width = WIDTH,()
+ * }
+ * @return {*} 
+ */
+function initSVG({
+    svgID = SVG_ID,
+    width,
+    height
+}) {
+    global.svg = document.getElementById(svgID);
+    global.svg.setAttribute("width", width);
+    global.svg.setAttribute("height", height);
+}
+
+function getSVGLineAttributes({
+    O,
+    A,
+    color = DRAW_COLOR,
+    strokeWidth = STROKE_WIDTH
+}) {
+    return [
+        ["x1", concatPixelUnit(O.x)],
+        ["y1", concatPixelUnit(O.y)],
+        ["x2", concatPixelUnit(A.x)],
+        ["y2", concatPixelUnit(A.y)],
+        ["stroke", color],
+        ["stroke-width", STROKE_WIDTH]
+    ];
+}
+
+/**
+ * Dessine une ligne
+ *
+ * @param {*} {
+ *     svg,
+ *     O,
+ *     A,
+ *     color = "black"
+ * }
+ * @return {*} 
+ */
+function addLine({
+    svg,
+    O,
+    A,
+    color = DRAW_COLOR
+}) {
+    if (svg) {
+        let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        getSVGLineAttributes({
+            O,
+            A,
+            color
+        }).forEach(([att, val]) => l.setAttribute(att, val));
+        svg.appendChild(l);
+    }
+}
+
+
+function draw({
+    svg,
+    O,
+    A,
     angle,
     count
 }) {
-    let debugData = {
-        currentFrame,
-        angle,
-        segmentsPerCorner: count,
-        computedAngle: angle * count,
-    };
-    new Data().getInstance().getData().forEach(([O, A], i) => {
-        debugData[`O${getGreekLetterAtIndex(i)}`] = `(${O.x},${O.y})`;
-        debugData[`A${getGreekLetterAtIndex(i)}`] = `(${A.x},${A.y})`;
-    });
-    return debugData;
+
+    range(count).reduce((A, _, i) => {
+        /* Dessine le segment OA */
+        addLine({
+            svg,
+            O,
+            A
+        })
+        /* Prepare le dessin pour la prochaine itération */
+        return computeNextPoint({
+            O,
+            A,
+            beta: computeBeta(angle)
+        });
+    }, A);
 }
-
-function getGreekLetterAtIndex(i) {
-    return String.fromCharCode(i + 945);
-}
-
-function init(dataset = DATASET) {
-
-}
-
 /**================================================================================================
- *                                         SECTION DATA
+ *                                         SECTION GEOMETRY
  *================================================================================================**/
 
 let point = {
@@ -909,24 +896,22 @@ let size = {
  *                                         SECTION DATA MANAGER
  *================================================================================================**/
 let Data = (function () {
-    let instance, _data = {};
-
-    function Singleton() {
-        if (instance) {
-            return instance;
-        }
-        instance = this;
-        instance.getData = function getDataFromDataset(dataset = DATASET)  {
+    let _data = {};
+    return {
+        getFromDataset: function (dataset = DATASET) {
             if (!_data[dataset]) {
                 _data[dataset] = paths[dataset]()
             }
             return [..._data[dataset]]
         }
+    };
+})()
 
-    }
-    Singleton.getInstance = function (dataset = DATASET) {
-        let self = instance || new Singleton()
-        return self
-    }
-    return Singleton;
-})
+/**=======================================================================================================================
+ *                                                    MAIN
+ *=======================================================================================================================**/
+
+
+function init(dataset = DATASET) {
+    renderFrame(DEFAULT)
+}
