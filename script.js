@@ -28,6 +28,7 @@ class Debug {
     static display(data) {
         const html = Object.keys(data).map(prop => `<tr><td>${prop}:</td><td>${display(prop)}</td></tr>`).join('')
         document.getElementById("debug").innerHTML = html
+
         function display(property) {
             return data[property].toFixed ?
                 data[property].toFixed(DEBUG_PRECISION) :
@@ -805,7 +806,7 @@ class Hexagon {
     }
 }
 class Shape {
-    static metaShapes= [Hexagon, Pentagon, Square];
+    static metaShapes = [Hexagon, Pentagon, Square];
     static getWidthAndHeight(dataset = shared.dataset, sizeCM = SIZE_CM) {
         let match = Shape.getGeometry(dataset);
         return match.sides(sizeCM)
@@ -855,4 +856,43 @@ class Page {
             .map(shape => `<li class="nav-item"><a class="nav-link" href="#" onclick="Page.load('${shape}')">${shape}</a></li>`)
             .join('');
     }
+    static toggleDebug() {
+        Page.hideForm();
+        Page.showDebug();
+    }
+    static showDebug() {
+        Page.toggleOn('tab-debug');
+        document.getElementById('tab-debug-content').hidden = false;
+    }
+
+    static hideForm() {
+        Page.toggleOff('tab-form');
+        document.getElementById('tab-form-content').hidden = true;
+    }
+
+    static toggleForm() {
+        Page.hideDebug();
+        Page.showForm();
+    }
+    static showForm() {
+        Page.toggleOn('tab-form');
+        document.getElementById('tab-form-content').hidden = false;
+    }
+
+    static hideDebug() {
+        Page.toggleOff('tab-debug');
+        document.getElementById('tab-debug-content').hidden = true;
+    }
+
+    static toggleOff(elementID) {
+        const htmlElement = document.getElementById(elementID);
+        htmlElement.className = [...htmlElement.classList]
+            .filter(e => e !== 'active')
+            .join(' ');
+    }
+    static toggleOn(elementID) {
+        const htmlElement = document.getElementById(elementID);
+        htmlElement.className = [...htmlElement.classList, 'active'].join(' ')
+    }
+
 }
