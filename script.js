@@ -7,15 +7,14 @@ let
     DEBUG_PRECISION = 3,
     DRAW_COLOR = 'black',
     STROKE_WIDTH = 0.4,
-    DATASET = 'square',
+    DATASET = 'triangle',
     MAX_FRAME = 1000,
     SQUARE_ANGLE = 90,
     PENTAGRAM_ANGLE = 36,
     TRIANGLE_ANGLE = 60,
     HEXAGON_ANGLE = 120,
     MS_IN_SECOND = 1000,
-    PIXEL_PER_CM = 0.0264583333,
-    REFERENCE_ANGLE = SQUARE_ANGLE,
+    PIXEL_PER_CM = 0.0264583333
     SIZE_CM = 15,
     global = {
         interval: undefined,
@@ -203,9 +202,9 @@ function computeBeta(angle) {
 
 function computeCount({
     angle,
-    reference = REFERENCE_ANGLE
+    referenceAngle
 }) {
-    return reference / angle
+    return referenceAngle / angle
 }
 
 function computeFrameRate(imgPerSecond) {
@@ -277,12 +276,14 @@ function play({
     imgPerSecond = IMG_PER_SECOND,
     angle = STARTING_ANGLE,
     delta = DELTA,
-    currentFrame = 1
+    currentFrame = 1,
+    dataset = DATASET
 }) {
     global.interval = setInterval(function playAnimation() {
         renderFrame({
             angle,
-            currentFrame
+            currentFrame, 
+            dataset
         })
         angle -= delta
         currentFrame++
@@ -295,12 +296,14 @@ function play({
 function renderFrame({
     angle = STARTING_ANGLE,
     currentFrame = 0,
+    dataset = DATASET
 }) {
     let count = computeCount({
-        angle
+        angle,
+        referenceAngle: shape.getReferenceAngle(dataset)
     });
     if (!global.svg) {
-        initSVG(shape.guessSidesFromDataset());
+        initSVG(shape.getWidthAndHeight(dataset));
     }
     debug(computeDebugData({
         currentFrame,
@@ -321,8 +324,8 @@ function renderFrame({
 
 function generateSVGFile({
     rawXmlData,
-    width = shape.guessSidesFromDataset(),
-    height = shape.guessSidesFromDataset()
+    width = shape.getWidthAndHeight(),
+    height = shape.getWidthAndHeight()
 }) {
     return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
 }
@@ -434,10 +437,10 @@ square.sides = function getSquareSize(size = SIZE_CM) {
 }
 
 square.paths = {
-    line: function getLinePaths({
+    z: function getLinePaths({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return [
             [square.point.alpha({
                 width,
@@ -455,10 +458,31 @@ square.paths = {
             })],
         ];
     },
+    line: function getLinePaths({
+        width,
+        height
+    } = shape.getWidthAndHeight()) {
+        return [
+            [square.point.alpha({
+                width,
+                height
+            }), square.point.offset.beta({
+                width,
+                height
+            })],
+            [square.point.gamma({
+                width,
+                height
+            }), square.point.offset.delta({
+                width,
+                height
+            })],
+        ];
+    },
     square: function getSquarePaths({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return [
             [square.point.alpha({
                 width,
@@ -495,7 +519,7 @@ square.point = {
     gamma: function getSquareGamma({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: width,
             y: height
@@ -504,7 +528,7 @@ square.point = {
     beta: function getSquareBeta({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: 0,
             y: height
@@ -513,7 +537,7 @@ square.point = {
     alpha: function getSquareAlpha({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: 0,
             y: 0
@@ -522,7 +546,7 @@ square.point = {
     delta: function getSquareDelta({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: width,
             y: 0
@@ -534,7 +558,7 @@ square.point.offset = {
     delta: function getSquareDeltaOffset({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: width,
             y: -height
@@ -543,7 +567,7 @@ square.point.offset = {
     gamma: function getSquareGammaOffset({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: 2 * width,
             y: height
@@ -552,7 +576,7 @@ square.point.offset = {
     beta: function getSquareBetaOffset({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: 0,
             y: 2 * height
@@ -561,7 +585,7 @@ square.point.offset = {
     alpha: function getSquareAlphaOffset({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: -width,
             y: 0
@@ -629,7 +653,7 @@ pentagon.paths = {
     pentagram: function getPentagramPaths({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return [
             [pentagon.point.alpha({
                 width,
@@ -678,7 +702,6 @@ pentagon.sides = function getPentagonSize(size = SIZE_CM) {
         height: convertCentimeterToPixel(heightInCentimeter)
 
     }
-
 }
 
 /**======================
@@ -692,7 +715,7 @@ hexagon.point = {
     delta: function getHexagonDelta({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return {
             x: width / 2,
             y: height
@@ -752,52 +775,52 @@ hexagon.paths = {
     hexagon: function getHexagonPaths({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         /**========================================================================
          * todo                             Gestion des chemins de l'hexagone
          *   Terminer le chemin sur le point adjacent n'est pas satisfaisant.
          * - [ ]  prolonger le segment de façon à ce que les arc de cercle couvrent l'hexagone
          *========================================================================**/
         return [
-            [point.hexagon.alpha({
+            [hexagon.point.alpha({
                 width,
                 height
-            }), point.hexagon.beta({
-                width,
-                height
-            })],
-            [point.hexagon.beta({
-                width,
-                height
-            }), point.hexagon.gamma({
+            }), hexagon.point.beta({
                 width,
                 height
             })],
-            [point.hexagon.gamma({
+            [hexagon.point.beta({
                 width,
                 height
-            }), point.hexagon.delta({
-                width,
-                height
-            })],
-            [point.hexagon.delta({
-                width,
-                height
-            }), point.hexagon.epsilon({
+            }), hexagon.point.gamma({
                 width,
                 height
             })],
-            [point.hexagon.epsilon({
+            [hexagon.point.gamma({
                 width,
                 height
-            }), point.hexagon.zeta({
+            }), hexagon.point.delta({
                 width,
                 height
             })],
-            [point.hexagon.zeta({
+            [hexagon.point.delta({
                 width,
                 height
-            }), point.hexagon.alpha({
+            }), hexagon.point.epsilon({
+                width,
+                height
+            })],
+            [hexagon.point.epsilon({
+                width,
+                height
+            }), hexagon.point.zeta({
+                width,
+                height
+            })],
+            [hexagon.point.zeta({
+                width,
+                height
+            }), hexagon.point.alpha({
                 width,
                 height
             })],
@@ -806,47 +829,47 @@ hexagon.paths = {
     star: function getStarPaths({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return [
-            [point.hexagon.alpha({
+            [hexagon.point.alpha({
                 width,
                 height
-            }), point.hexagon.gamma({
-                width,
-                height
-            })],
-            [point.hexagon.gamma({
-                width,
-                height
-            }), point.hexagon.epsilon({
+            }), hexagon.point.gamma({
                 width,
                 height
             })],
-            [point.hexagon.epsilon({
+            [hexagon.point.gamma({
                 width,
                 height
-            }), point.hexagon.alpha({
-                width,
-                height
-            })],
-            [point.hexagon.beta({
-                width,
-                height
-            }), point.hexagon.delta({
+            }), hexagon.point.epsilon({
                 width,
                 height
             })],
-            [point.hexagon.delta({
+            [hexagon.point.epsilon({
                 width,
                 height
-            }), point.hexagon.zeta({
+            }), hexagon.point.alpha({
                 width,
                 height
             })],
-            [point.hexagon.zeta({
+            [hexagon.point.beta({
                 width,
                 height
-            }), point.hexagon.alpha({
+            }), hexagon.point.delta({
+                width,
+                height
+            })],
+            [hexagon.point.delta({
+                width,
+                height
+            }), hexagon.point.zeta({
+                width,
+                height
+            })],
+            [hexagon.point.zeta({
+                width,
+                height
+            }), hexagon.point.alpha({
                 width,
                 height
             })]
@@ -855,26 +878,26 @@ hexagon.paths = {
     triangle: function getTrianglePaths({
         width,
         height
-    } = shape.guessSidesFromDataset()) {
+    } = shape.getWidthAndHeight()) {
         return [
-            [point.hexagon.alpha({
+            [hexagon.point.alpha({
                 width,
                 height
-            }), point.hexagon.gamma({
-                width,
-                height
-            })],
-            [point.hexagon.gamma({
-                width,
-                height
-            }), point.hexagon.epsilon({
+            }), hexagon.point.gamma({
                 width,
                 height
             })],
-            [point.hexagon.epsilon({
+            [hexagon.point.gamma({
                 width,
                 height
-            }), point.hexagon.alpha({
+            }), hexagon.point.epsilon({
+                width,
+                height
+            })],
+            [hexagon.point.epsilon({
+                width,
+                height
+            }), hexagon.point.alpha({
                 width,
                 height
             })]
@@ -893,12 +916,12 @@ hexagon.sides = function getHexagonSize(size = SIZE_CM) {
 
 
 let shape = {
-    guessSidesFromDataset: function (dataset = DATASET, sizeCM = SIZE_CM) {
-        let match = shape.findFromDataset(dataset);
+    getWidthAndHeight: function (dataset = DATASET, sizeCM = SIZE_CM) {
+        let match = shape.getGeometry(dataset);
         return match.sides(sizeCM)
     },
 
-    findFromDataset: function (dataset) {
+    getGeometry: function (dataset = DATASET) {
         const isAdmissible = a => Object.keys(a.paths).includes(dataset)
         const match = [hexagon, pentagon, square]
             .find(isAdmissible);
@@ -906,6 +929,10 @@ let shape = {
             throw Error(`Unknown dataset (${dataset})`)
         }
         return match;
+    }, 
+    getReferenceAngle: function (dataset=DATASET){
+        let match = shape.getGeometry(dataset)
+        return match.angle;
     }
 
 }
@@ -919,7 +946,7 @@ let Geometry = (function DataModule() {
     return {
         getPathsList: function (dataset = DATASET) {
             if (!_data[dataset]) {
-                _data[dataset] = shape.findFromDataset(dataset).paths[dataset]()
+                _data[dataset] = shape.getGeometry(dataset).paths[dataset]()
             }
             return [..._data[dataset]]
         }
@@ -932,5 +959,5 @@ let Geometry = (function DataModule() {
 
 
 function init(dataset = DATASET) {
-    renderFrame(DEFAULT)
+    renderFrame({dataset})
 }
