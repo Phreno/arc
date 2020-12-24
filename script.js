@@ -13,417 +13,325 @@ let
     TRIANGLE_ANGLE = 60,
     HEXAGON_ANGLE = 120,
     MS_IN_SECOND = 1000,
-    PIXEL_PER_CM = 0.0264583333
-SIZE_CM = 12,
+    PIXEL_PER_CM = 0.0264583333,
+    SIZE_CM = 12,
     shared = {
         interval: undefined,
         svg: undefined,
         dataset: undefined
     };
-
-
-
-
 /**================================================================================================
  *                                         SECTION DEBUG
  *================================================================================================**/
-
-/**
- * Affiche l'ouverture actuelle de l'angle sur l'interface
- *
- * @param {*} angle
- */
-function debug(data) {
-
-    const html = Object.keys(data).map(prop => `<tr><td>${prop}:</td><td>${display(prop)}</td></tr>`).join('')
-    document.getElementById("debug").innerHTML = html
-
-    function display(property) {
-        return data[property].toFixed ?
-            data[property].toFixed(DEBUG_PRECISION) :
-            data[property]
-
+class Debug {
+    static display(data) {
+        const html = Object.keys(data).map(prop => `<tr><td>${prop}:</td><td>${display(prop)}</td></tr>`).join('')
+        document.getElementById("debug").innerHTML = html
+        function display(property) {
+            return data[property].toFixed ?
+                data[property].toFixed(DEBUG_PRECISION) :
+                data[property]
+        }
     }
-}
-
-function computeDebugData({
-    currentFrame,
-    angle,
-    count
-}) {
-    let debugData = {
+    static compute({
         currentFrame,
         angle,
-        segmentsPerCorner: count,
-        computedAngle: angle * count,
-    };
-    Geometry.getPathsList().forEach(([O, A], i) => {
-        debugData[`O${getGreekLetterAtIndex(i)}`] = `(${O.x},${O.y})`;
-        debugData[`A${getGreekLetterAtIndex(i)}`] = `(${A.x},${A.y})`;
-    });
-    return debugData;
+        count
+    }) {
+        let debugData = {
+            currentFrame,
+            angle,
+            segmentsPerCorner: count,
+            computedAngle: angle * count,
+        };
+        Geometry.getPathsList().forEach(([O, A], i) => {
+            debugData[`O${Tools.getGreekLetterAtIndex(i)}`] = `(${O.x},${O.y})`;
+            debugData[`A${Tools.getGreekLetterAtIndex(i)}`] = `(${A.x},${A.y})`;
+        });
+        return debugData;
+    }
 }
-
-
 /**================================================================================================
  *                                         SECTION TOOLS
  *================================================================================================**/
-
-/**
- * Construit un tableau dont les valeurs sont les index
- *
- * @param {*} count
- * @return {*} 
- */
-function range(count) {
-    return [...Array(Math.floor(count)).keys()];
-}
-
-function convertPixelToCentimeter(px) {
-    return px * PIXEL_PER_CM
-}
-
-function convertCentimeterToPixel(cm) {
-    return cm / PIXEL_PER_CM
-}
-
-function getGreekLetterAtIndex(i) {
-    return String.fromCharCode(i + 945);
-}
-
-
-function concatPixelUnit(val) {
-    return val + "px";
+class Tools {
+    static range(count) {
+        return [...Array(Math.floor(count)).keys()];
+    }
+    static convertPixelToCentimeter(px) {
+        return px * PIXEL_PER_CM
+    }
+    static convertCentimeterToPixel(cm) {
+        return cm / PIXEL_PER_CM
+    }
+    static getGreekLetterAtIndex(i) {
+        return String.fromCharCode(i + 945);
+    }
+    static concatPixelUnit(val) {
+        return val + "px";
+    }
 }
 /**================================================================================================
  *                                         SECTION UPLOAD
  *================================================================================================**/
-function uploadFrame(rawXmlData = shared.svg.innerHTML, prefix = "export") {
-    uploadFile(prefix, generateSVGFile({
-        rawXmlData
-    }));
-}
-
-
-function uploadFile(prefix, svgData) {
-    const link = document.createElement("a");
-    getLinkAttributes({
+class UploadManager {
+    static uploadFrame(rawXmlData = shared.svg.innerHTML, prefix = "export") {
+        UploadManager.uploadFile(prefix, SVGManager.generateSVGFile({
+            rawXmlData
+        }));
+    }
+    static uploadFile(prefix, svgData) {
+        const link = document.createElement("a");
+        UploadManager.getLinkAttributes({
+            prefix,
+            svgData
+        }).forEach(([attr, val]) => link.setAttribute(attr, val))
+        document.body.appendChild(link);
+        link.click();
+    }
+    static getLinkAttributes({
         prefix,
-        svgData
-    }).forEach(([attr, val]) => link.setAttribute(attr, val))
-    document.body.appendChild(link);
-    link.click();
+        svgData,
+        target = '_blank'
+    }) {
+        return [
+            ["download", UploadManager.getSVGFileName(prefix)],
+            ["href", UploadManager.surroundWithSVGMetadata(svgData)],
+            ["target", target]
+        ];
+    }
+    static getSVGFileName(prefix) {
+        return `${prefix}.svg`;
+    }
+    static surroundWithSVGMetadata(svgData) {
+        return `data:image/svg+xml; charset=UTF-8,%EF%BB%BF${encodeURI(svgData)}`;
+    }
 }
-
-
-function getLinkAttributes({
-    prefix,
-    svgData,
-    target = '_blank'
-}) {
-    return [
-        ["download", getSVGFileName(prefix)],
-        ["href", surroundWithSVGMetadata(svgData)],
-        ["target", target]
-    ];
-}
-
-function getSVGFileName(prefix) {
-    return `${prefix}.svg`;
-}
-
-function surroundWithSVGMetadata(svgData) {
-    return `data:image/svg+xml; charset=UTF-8,%EF%BB%BF${encodeURI(svgData)}`;
-}
-
-
-
-
-
 /**================================================================================================
  *                                         SECTION MATH
  *================================================================================================**/
-/**
- * Calcule le coordonnées du point B, 
- * pour former un arc avec le segment OA
- *
- * @param {*} {
- *     O,
- *     A,
- *     beta
- * }
- * @return {*} 
- */
-function computeNextPoint({
-    O,
-    A,
-    beta,
-    clockwiseRotation = false
-}) {
-    if (clockwiseRotation) {
-        beta = -beta
+class Mathematic {
+    static computeNextPoint({
+        O,
+        A,
+        beta,
+        clockwiseRotation = false
+    }) {
+        if (clockwiseRotation) {
+            beta = -beta
+        }
+        return {
+            x: Mathematic.doSomeXMagic({
+                O,
+                A,
+                beta
+            }),
+            y: Mathematic.doSomeYMagic({
+                O,
+                A,
+                beta
+            })
+        };
     }
-    return {
-        x: doSomeXMagic({
-            O,
-            A,
-            beta
-        }),
-        y: doSomeYMagic({
-            O,
-            A,
-            beta
-        })
-    };
+    static doSomeYMagic({
+        O,
+        A,
+        beta
+    }) {
+        let x = O.y - (A.x - O.x) * Math.sin(beta) + (A.y - O.y) * Math.cos(beta);
+        return Math.round(x);
+    }
+    static doSomeXMagic({
+        O,
+        A,
+        beta
+    }) {
+        let y = O.x + (A.x - O.x) * Math.cos(beta) + (A.y - O.y) * Math.sin(beta);
+        return Math.round(y);
+    }
+    static computeBeta(angle) {
+        return angle * Math.PI / 180.0;
+    }
+    static computeCount({
+        angle,
+        referenceAngle
+    }) {
+        return referenceAngle / angle
+    }
+    static computeHexagonWidthFromHeight(height = SIZE_CM) {
+        return Math.sqrt(3) * height / 2;
+    }
+    static computePentagonHeightFromWidth(width = SIZE_CM) {
+        let c = width / 1.618,
+            R = c / 1.175,
+            a = 0.809 * R
+        return a + R
+    }
 }
-
-function doSomeYMagic({
-    O,
-    A,
-    beta
-}) {
-    let x = O.y - (A.x - O.x) * Math.sin(beta) + (A.y - O.y) * Math.cos(beta);
-    return Math.round(x);
-}
-
-function doSomeXMagic({
-    O,
-    A,
-    beta
-}) {
-    let y = O.x + (A.x - O.x) * Math.cos(beta) + (A.y - O.y) * Math.sin(beta);
-    return Math.round(y);
-}
-
-function computeBeta(angle) {
-    return angle * Math.PI / 180.0;
-}
-
-
-function computeCount({
-    angle,
-    referenceAngle
-}) {
-    return referenceAngle / angle
-}
-
-function computeFrameRate(imgPerSecond) {
-    return MS_IN_SECOND / imgPerSecond;
-}
-
-function computeHexagonWidthFromHeight(height = SIZE_CM) {
-    return Math.sqrt(3) * height / 2;
-}
-
-function computePentagonHeightFromWidth(width = SIZE_CM) {
-    let c = width / 1.618,
-        R = c / 1.175,
-        a = 0.809 * R
-    return a + R
-}
-
 /**================================================================================================
  *                                         SECTION ANIMATION
  *================================================================================================**/
-
-/**
- * Supprime le contenu du svg
- * pour laisser la place à la frame suivante
- *
- * @param {*} svg
- */
-function flushScene(svg) {
-    if (svg) {
-        svg.innerHTML = ''
+class AnimationManager {
+    static flushScene(svg) {
+        if (svg) {
+            svg.innerHTML = ''
+        }
     }
-}
-
-/**
- * Construit la frame courante
- *
- * @param {*} {width=WIDTH, height=HEIGHT, svg, angle, count}
- */
-function drawFrame({
-    svg = shared.svg,
-    angle,
-    count
-}) {
-    flushScene(svg);
-    Geometry.getPathsList().forEach(([O, A]) => {
-        draw({
-            svg,
-            O,
-            A,
+    static computeFrameRate(imgPerSecond) {
+        return MS_IN_SECOND / imgPerSecond;
+    }
+    static drawFrame({
+        svg = shared.svg,
+        angle,
+        count
+    }) {
+        AnimationManager.flushScene(svg);
+        Geometry.getPathsList().forEach(([O, A]) => {
+            SVGManager.drawAngle({
+                svg,
+                O,
+                A,
+                angle,
+                count
+            });
+        });
+    }
+    static stop(interval = shared.interval) {
+        clearInterval(interval);
+    }
+    static checkOrStopAnimation(runConditions) {
+        if (runConditions.some(c => !c)) {
+            AnimationManager.stop()
+        }
+    }
+    static play({
+        imgPerSecond = IMG_PER_SECOND,
+        angle = STARTING_ANGLE,
+        delta = DELTA,
+        currentFrame = 1,
+        dataset = shared.dataset
+    }) {
+        shared.interval = setInterval(function playAnimation() {
+            AnimationManager.renderFrame({
+                angle,
+                currentFrame,
+                dataset
+            })
+            angle -= delta
+            currentFrame++
+            AnimationManager.checkOrStopAnimation([
+                currentFrame < MAX_FRAME
+            ])
+        }, AnimationManager.computeFrameRate(imgPerSecond));
+    }
+    static renderFrame({
+        angle = STARTING_ANGLE,
+        currentFrame = 0,
+        dataset = shared.dataset
+    }) {
+        let count = Mathematic.computeCount({
+            angle,
+            referenceAngle: shape.getReferenceAngle(dataset)
+        });
+        if (!shared.svg) {
+            SVGManager.initContainer(shape.getWidthAndHeight(dataset));
+        }
+        Debug.display(Debug.compute({
+            currentFrame,
+            angle,
+            count
+        }));
+        AnimationManager.drawFrame({
             angle,
             count
         });
-    });
-}
-
-
-function stopAnimation(interval = shared.interval) {
-    clearInterval(interval);
-}
-
-function checkOrStopAnimation(runConditions) {
-    if (runConditions.some(c => !c)) {
-        stopAnimation()
     }
 }
-
-
-function play({
-    imgPerSecond = IMG_PER_SECOND,
-    angle = STARTING_ANGLE,
-    delta = DELTA,
-    currentFrame = 1,
-    dataset = shared.dataset
-}) {
-    shared.interval = setInterval(function playAnimation() {
-        renderFrame({
-            angle,
-            currentFrame,
-            dataset
-        })
-        angle -= delta
-        currentFrame++
-        checkOrStopAnimation([
-            currentFrame < MAX_FRAME
-        ])
-    }, computeFrameRate(imgPerSecond));
-}
-
-function renderFrame({
-    angle = STARTING_ANGLE,
-    currentFrame = 0,
-    dataset = shared.dataset
-}) {
-    let count = computeCount({
-        angle,
-        referenceAngle: shape.getReferenceAngle(dataset)
-    });
-    if (!shared.svg) {
-        initSVG(shape.getWidthAndHeight(dataset));
-    }
-    debug(computeDebugData({
-        currentFrame,
-        angle,
-        count
-    }));
-    drawFrame({
-        angle,
-        count
-    });
-}
-
-
-
 /**================================================================================================
  *                                         SECTION SVG
  *================================================================================================**/
-
-function generateSVGFile({
-    rawXmlData,
-    width = shape.getWidthAndHeight(),
-    height = shape.getWidthAndHeight()
-}) {
-    return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
-}
-
-/**
- * Focus sur le dom et initialise la taille du SVG
- *
- * @param {*} {
- *     svgID = SVG_ID,
- *     width = WIDTH,()
- * }
- * @return {*} 
- */
-function initSVG({
-    svgID = SVG_ID,
-    width,
-    height
-}) {
-    shared.svg = document.getElementById(svgID);
-    shared.svg.setAttribute("width", width);
-    shared.svg.setAttribute("height", height);
-}
-
-function getSVGLineAttributes({
-    O,
-    A,
-    color = DRAW_COLOR,
-    strokeWidth = STROKE_WIDTH
-}) {
-    return [
-        ["x1", concatPixelUnit(O.x)],
-        ["y1", concatPixelUnit(O.y)],
-        ["x2", concatPixelUnit(A.x)],
-        ["y2", concatPixelUnit(A.y)],
-        ["stroke", color],
-        ["stroke-width", STROKE_WIDTH]
-    ];
-}
-
-/**
- * Dessine une ligne
- *
- * @param {*} {
- *     svg,
- *     O,
- *     A,
- *     color = "black"
- * }
- * @return {*} 
- */
-function addLine({
-    svg,
-    O,
-    A,
-    color = DRAW_COLOR
-}) {
-    if (svg) {
-        let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        getSVGLineAttributes({
-            O,
-            A,
-            color
-        }).forEach(([att, val]) => l.setAttribute(att, val));
-        svg.appendChild(l);
+class SVGManager {
+    static generateSVGFile({
+        rawXmlData,
+        width = shape.getWidthAndHeight(),
+        height = shape.getWidthAndHeight()
+    }) {
+        return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
     }
-}
-
-
-function draw({
-    svg,
-    O,
-    A,
-    angle,
-    count
-}) {
-
-    range(count).reduce((A, _, i) => {
-        /* Dessine le segment OA */
-        addLine({
-            svg,
-            O,
-            A
-        })
-        /* Prepare le dessin pour la prochaine itération */
-        return computeNextPoint({
-            O,
-            A,
-            beta: computeBeta(angle)
-        });
-    }, A);
+    static initContainer({
+        svgID = SVG_ID,
+        width,
+        height
+    }) {
+        shared.svg = document.getElementById(svgID);
+        shared.svg.setAttribute("width", width);
+        shared.svg.setAttribute("height", height);
+    }
+    static computeLineAttributes({
+        O,
+        A,
+        color = DRAW_COLOR,
+        strokeWidth = STROKE_WIDTH
+    }) {
+        return [
+            ["x1", Tools.concatPixelUnit(O.x)],
+            ["y1", Tools.concatPixelUnit(O.y)],
+            ["x2", Tools.concatPixelUnit(A.x)],
+            ["y2", Tools.concatPixelUnit(A.y)],
+            ["stroke", color],
+            ["stroke-width", STROKE_WIDTH]
+        ];
+    }
+    static addLine({
+        svg,
+        O,
+        A,
+        color = DRAW_COLOR
+    }) {
+        if (svg) {
+            let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            SVGManager.computeLineAttributes({
+                O,
+                A,
+                color
+            }).forEach(([att, val]) => l.setAttribute(att, val));
+            svg.appendChild(l);
+        }
+    }
+    static drawAngle({
+        svg,
+        O,
+        A,
+        angle,
+        count
+    }) {
+        Tools.range(count).reduce((A, _, i) => {
+            /* Dessine le segment OA */
+            SVGManager.addLine({
+                svg,
+                O,
+                A
+            })
+            /* Prepare le dessin pour la prochaine itération */
+            return Mathematic.computeNextPoint({
+                O,
+                A,
+                beta: Mathematic.computeBeta(angle)
+            });
+        }, A);
+    }
 }
 /**=======================================================================================================================
  *                                                    SECTION GEOMETRY
  *=======================================================================================================================**/
-
 /**======================
  *    SQUARE
  *========================**/
+
+//  class Square {
+//      static angle = SQUARE_ANGLE
+
+//  }
 let square = {
     angle: 90
 }
@@ -431,11 +339,10 @@ square.sides = function getSquareSize(size = SIZE_CM) {
     return {
         widthInCentimeter: size,
         heightInCentimeter: size,
-        width: convertCentimeterToPixel(size),
-        height: convertCentimeterToPixel(size)
+        width: Tools.convertCentimeterToPixel(size),
+        height: Tools.convertCentimeterToPixel(size)
     }
 }
-
 square.paths = {
     z: function getLinePaths({
         width,
@@ -553,7 +460,6 @@ square.point = {
         };
     }
 }
-
 square.point.offset = {
     delta: function getSquareDeltaOffset({
         width,
@@ -592,8 +498,6 @@ square.point.offset = {
         };
     }
 }
-
-
 /**======================
  *    PENTAGON
  *========================**/
@@ -628,7 +532,6 @@ pentagon.point = {
             y: height - (1.118 * height / 1.809)
         };
     },
-
     beta: function getPentagonBeta({
         width,
         height
@@ -638,7 +541,6 @@ pentagon.point = {
             y: height - (1.118 * height / 1.809)
         };
     },
-
     alpha: function getPentagonAlpha({
         width,
         height
@@ -698,16 +600,13 @@ pentagon.sides = function getPentagonSize(size = SIZE_CM) {
     return {
         widthInCentimeter: size,
         heightInCentimeter,
-        width: convertCentimeterToPixel(size),
-        height: convertCentimeterToPixel(heightInCentimeter)
-
+        width: Tools.convertCentimeterToPixel(size),
+        height: Tools.convertCentimeterToPixel(heightInCentimeter)
     }
 }
-
 /**======================
  *    HEXAGON
  *========================**/
-
 let hexagon = {
     angle: 120
 }
@@ -721,7 +620,6 @@ hexagon.point = {
             y: height
         };
     },
-
     epsilon: function getHexagonEpsilon({
         width,
         height
@@ -731,7 +629,6 @@ hexagon.point = {
             y: (3 / 4) * height
         };
     },
-
     zeta: function getHexagonZeta({
         width,
         height
@@ -741,7 +638,6 @@ hexagon.point = {
             y: (1 / 4) * height
         };
     },
-
     gamma: function getHexagonGamma({
         width,
         height
@@ -751,7 +647,6 @@ hexagon.point = {
             y: (3 / 4) * height
         };
     },
-
     beta: function getHexagonBeta({
         width,
         height
@@ -913,14 +808,11 @@ hexagon.sides = function getHexagonSize(size = SIZE_CM) {
         height: convertCentimeterToPixel(size)
     }
 }
-
-
 let shape = {
     getWidthAndHeight: function (dataset = shared.dataset, sizeCM = SIZE_CM) {
         let match = shape.getGeometry(dataset);
         return match.sides(sizeCM)
     },
-
     getGeometry: function (dataset = shared.dataset) {
         const isAdmissible = a => Object.keys(a.paths).includes(dataset)
         const match = [hexagon, pentagon, square]
@@ -934,10 +826,7 @@ let shape = {
         let match = shape.getGeometry(dataset)
         return match.angle;
     }
-
 }
-
-
 /**================================================================================================
  *                                         SECTION GEOMETRY
  *================================================================================================**/
@@ -952,12 +841,10 @@ let Geometry = (function DataModule() {
         }
     };
 })()
-
 /**=======================================================================================================================
  *                                                    MAIN
  *=======================================================================================================================**/
-
 function init(dataset) {
     shared.dataset = dataset
-    renderFrame(DEFAULT)
+    AnimationManager.renderFrame(DEFAULT)
 }
