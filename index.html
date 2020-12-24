@@ -7,154 +7,65 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
 
-<body onload="init('square')">
-
+<body onload="Page.init()">
     <!--=============================== HEADER =============================-->
-
-
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
         <a class="navbar-brand" href="#">Hexaction</a>
     </nav>
-
     <div class="container-fluid">
         <div class="row">
-
             <!--=============================== MENU GAUCHE =============================-->
-
-
             <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-
                 <div class="sidebar-sticky">
                     <h6
                         class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>2 points reference</span>
+                        <span>Shapes</span>
                     </h6>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('line')">
-                                line
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('z')">
-                                z
-                            </a>
-                        </li>
-                    </ul>
-                    <h6
-                        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>3 points reference</span>
-                    </h6>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('triangle')">
-                                triangle
-                            </a>
-                        </li>
-                    </ul>
-                    <h6
-                        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>4 points reference</span>
-                    </h6>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('square')">
-                                square
-                            </a>
-                        </li>
-
-                    </ul>
-
-                    <h6
-                        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>5 points reference</span>
-                    </h6>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('pentagon')">
-                                pentagon
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('pentagram')">
-                                pentagram
-                            </a>
-                        </li>
-                    </ul>
-
-                    <h6
-                        class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>6 points reference</span>
-                    </h6>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('hexagon')">
-                                hexagon
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="init('star')">
-                                star
-                            </a>
-                        </li>
-                    </ul>
+                    <ul class="nav flex-column" id="menu"></ul>
                 </div>
             </nav>
             <!--=============================== MAIN =============================-->
-
-
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
                 <!--=============================== BOUTONS =============================-->
-
-
                 <div
                     class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
                     <h1 class="h2">Dashboard</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-
-
                         <div class="btn-group mr-2" role="group" aria-label="First group">
-                            <button class="btn btn-primary" onclick="AnimationManager.stop()"><span class="material-icons">
+                            <button class="btn btn-primary" onclick="AnimationManager.stop()"><span
+                                    class="material-icons">
                                     stop
                                 </span></button>
-                            <button class="btn btn-primary" onclick="AnimationManager.play(DEFAULT)"><span class="material-icons">
+                            <button class="btn btn-primary" onclick="AnimationManager.play(DEFAULT)"><span
+                                    class="material-icons">
                                     play_arrow
                                 </span></button>
-
                         </div>
-
                         <div class="input-group mr-2" role="group" aria-label="First group">
-
                             <input class="form-control" type="number" id="angle" placeholder="angle opening">
-
                             <div class="input-group-append">
                                 <button class="btn btn-primary"
-                                    onclick="renderFrame({angle:document.getElementById('angle').value})">
+                                    onclick="Animation.renderFrame({angle:document.getElementById('angle').value})">
                                     <span class="material-icons">
                                         arrow_forward
                                     </span>
                                 </button>
                             </div>
                         </div>
-
                         <div class="btn-group mr-2">
                             <button class="btn btn-sm btn-outline-secondary" onclick="UploadManager.uploadFrame()"><span
                                     class="material-icons">
                                     get_app
                                 </span></button>
                         </div>
-
                     </div>
                 </div>
                 <!--=============================== ANIMATION =============================-->
-
                 <div class="row">
                     <div class="col">
                         <svg id="tagSVG"></svg>
                     </div>
                     <!--=============================== DEBUG =============================-->
-
-
                     <div class="col">
                         <h2>Section title</h2>
                         <div class="table-responsive">
@@ -171,10 +82,7 @@
                         </div>
                     </div>
                 </div>
-
-
             </main>
-
         </div>
     </div>
     <script src="script.js"></script>
