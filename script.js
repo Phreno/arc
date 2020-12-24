@@ -7,7 +7,6 @@ let
     DEBUG_PRECISION = 3,
     DRAW_COLOR = 'black',
     STROKE_WIDTH = 0.4,
-    DATASET = 'triangle',
     MAX_FRAME = 1000,
     SQUARE_ANGLE = 90,
     PENTAGRAM_ANGLE = 36,
@@ -15,10 +14,11 @@ let
     HEXAGON_ANGLE = 120,
     MS_IN_SECOND = 1000,
     PIXEL_PER_CM = 0.0264583333
-    SIZE_CM = 15,
-    global = {
+SIZE_CM = 12,
+    shared = {
         interval: undefined,
-        svg: undefined
+        svg: undefined,
+        dataset: undefined
     };
 
 
@@ -98,7 +98,7 @@ function concatPixelUnit(val) {
 /**================================================================================================
  *                                         SECTION UPLOAD
  *================================================================================================**/
-function uploadFrame(rawXmlData = global.svg.innerHTML, prefix = "export") {
+function uploadFrame(rawXmlData = shared.svg.innerHTML, prefix = "export") {
     uploadFile(prefix, generateSVGFile({
         rawXmlData
     }));
@@ -244,7 +244,7 @@ function flushScene(svg) {
  * @param {*} {width=WIDTH, height=HEIGHT, svg, angle, count}
  */
 function drawFrame({
-    svg = global.svg,
+    svg = shared.svg,
     angle,
     count
 }) {
@@ -261,7 +261,7 @@ function drawFrame({
 }
 
 
-function stopAnimation(interval = global.interval) {
+function stopAnimation(interval = shared.interval) {
     clearInterval(interval);
 }
 
@@ -277,12 +277,12 @@ function play({
     angle = STARTING_ANGLE,
     delta = DELTA,
     currentFrame = 1,
-    dataset = DATASET
+    dataset = shared.dataset
 }) {
-    global.interval = setInterval(function playAnimation() {
+    shared.interval = setInterval(function playAnimation() {
         renderFrame({
             angle,
-            currentFrame, 
+            currentFrame,
             dataset
         })
         angle -= delta
@@ -296,13 +296,13 @@ function play({
 function renderFrame({
     angle = STARTING_ANGLE,
     currentFrame = 0,
-    dataset = DATASET
+    dataset = shared.dataset
 }) {
     let count = computeCount({
         angle,
         referenceAngle: shape.getReferenceAngle(dataset)
     });
-    if (!global.svg) {
+    if (!shared.svg) {
         initSVG(shape.getWidthAndHeight(dataset));
     }
     debug(computeDebugData({
@@ -344,9 +344,9 @@ function initSVG({
     width,
     height
 }) {
-    global.svg = document.getElementById(svgID);
-    global.svg.setAttribute("width", width);
-    global.svg.setAttribute("height", height);
+    shared.svg = document.getElementById(svgID);
+    shared.svg.setAttribute("width", width);
+    shared.svg.setAttribute("height", height);
 }
 
 function getSVGLineAttributes({
@@ -916,12 +916,12 @@ hexagon.sides = function getHexagonSize(size = SIZE_CM) {
 
 
 let shape = {
-    getWidthAndHeight: function (dataset = DATASET, sizeCM = SIZE_CM) {
+    getWidthAndHeight: function (dataset = shared.dataset, sizeCM = SIZE_CM) {
         let match = shape.getGeometry(dataset);
         return match.sides(sizeCM)
     },
 
-    getGeometry: function (dataset = DATASET) {
+    getGeometry: function (dataset = shared.dataset) {
         const isAdmissible = a => Object.keys(a.paths).includes(dataset)
         const match = [hexagon, pentagon, square]
             .find(isAdmissible);
@@ -929,8 +929,8 @@ let shape = {
             throw Error(`Unknown dataset (${dataset})`)
         }
         return match;
-    }, 
-    getReferenceAngle: function (dataset=DATASET){
+    },
+    getReferenceAngle: function (dataset = shared.dataset) {
         let match = shape.getGeometry(dataset)
         return match.angle;
     }
@@ -944,7 +944,7 @@ let shape = {
 let Geometry = (function DataModule() {
     let _data = {};
     return {
-        getPathsList: function (dataset = DATASET) {
+        getPathsList: function (dataset = shared.dataset) {
             if (!_data[dataset]) {
                 _data[dataset] = shape.getGeometry(dataset).paths[dataset]()
             }
@@ -957,7 +957,7 @@ let Geometry = (function DataModule() {
  *                                                    MAIN
  *=======================================================================================================================**/
 
-
-function init(dataset = DATASET) {
-    renderFrame({dataset})
+function init(dataset) {
+    shared.dataset = dataset
+    renderFrame(DEFAULT)
 }
