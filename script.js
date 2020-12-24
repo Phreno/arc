@@ -232,10 +232,10 @@ class AnimationManager {
     }) {
         let count = Mathematic.computeCount({
             angle,
-            referenceAngle: shape.getReferenceAngle(dataset)
+            referenceAngle: Shape.getReferenceAngle(dataset)
         });
         if (!shared.svg) {
-            SVGManager.initContainer(shape.getWidthAndHeight(dataset));
+            SVGManager.initContainer(Shape.getWidthAndHeight(dataset));
         }
         Debug.display(Debug.compute({
             currentFrame,
@@ -254,8 +254,8 @@ class AnimationManager {
 class SVGManager {
     static generateSVGFile({
         rawXmlData,
-        width = shape.getWidthAndHeight(),
-        height = shape.getWidthAndHeight()
+        width = Shape.getWidthAndHeight(),
+        height = Shape.getWidthAndHeight()
     }) {
         return `<?xml version="1.0" standalone="no"?><svg width="${width}px" height="${height}px" version="1.1" xmlns="http://www.w3.org/2000/svg">${rawXmlData}</svg>`;
     }
@@ -342,7 +342,7 @@ class Square {
         z: function getLinePaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return [
                 [Square.point.alpha({
                     width,
@@ -363,7 +363,7 @@ class Square {
         line: function getLinePaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return [
                 [Square.point.alpha({
                     width,
@@ -384,7 +384,7 @@ class Square {
         square: function getSquarePaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return [
                 [Square.point.alpha({
                     width,
@@ -421,7 +421,7 @@ class Square {
         gamma: function getSquareGamma({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: width,
                 y: height
@@ -430,7 +430,7 @@ class Square {
         beta: function getSquareBeta({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: 0,
                 y: height
@@ -439,7 +439,7 @@ class Square {
         alpha: function getSquareAlpha({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: 0,
                 y: 0
@@ -448,7 +448,7 @@ class Square {
         delta: function getSquareDelta({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: width,
                 y: 0
@@ -459,7 +459,7 @@ class Square {
         delta: function getSquareDeltaOffset({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: width,
                 y: -height
@@ -468,7 +468,7 @@ class Square {
         gamma: function getSquareGammaOffset({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: 2 * width,
                 y: height
@@ -477,7 +477,7 @@ class Square {
         beta: function getSquareBetaOffset({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: 0,
                 y: 2 * height
@@ -486,7 +486,7 @@ class Square {
         alpha: function getSquareAlphaOffset({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: -width,
                 y: 0
@@ -550,7 +550,7 @@ class Pentagon {
         pentagram: function getPentagramPaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return [
                 [Pentagon.point.alpha({
                     width,
@@ -609,7 +609,7 @@ class Hexagon {
         delta: function getHexagonDelta({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return {
                 x: width / 2,
                 y: height
@@ -665,7 +665,7 @@ class Hexagon {
         hexagon: function getHexagonPaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             /**========================================================================
              * todo                             Gestion des chemins de l'hexagone
              *   Terminer le chemin sur le point adjacent n'est pas satisfaisant.
@@ -719,7 +719,7 @@ class Hexagon {
         star: function getStarPaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return [
                 [Hexagon.point.alpha({
                     width,
@@ -768,7 +768,7 @@ class Hexagon {
         triangle: function getTrianglePaths({
             width,
             height
-        } = shape.getWidthAndHeight()) {
+        } = Shape.getWidthAndHeight()) {
             return [
                 [Hexagon.point.alpha({
                     width,
@@ -804,22 +804,22 @@ class Hexagon {
         }
     }
 }
-let shape = {
-    metaShapes: [Hexagon, Pentagon, Square],
-    getWidthAndHeight: function (dataset = shared.dataset, sizeCM = SIZE_CM) {
-        let match = shape.getGeometry(dataset);
+class Shape {
+    static metaShapes= [Hexagon, Pentagon, Square];
+    static getWidthAndHeight(dataset = shared.dataset, sizeCM = SIZE_CM) {
+        let match = Shape.getGeometry(dataset);
         return match.sides(sizeCM)
-    },
-    getGeometry: function (dataset = shared.dataset) {
+    }
+    static getGeometry(dataset = shared.dataset) {
         const isAdmissible = a => Object.keys(a.paths).includes(dataset)
-        const match = shape.metaShapes.find(isAdmissible);
+        const match = Shape.metaShapes.find(isAdmissible);
         if (!match) {
             throw Error(`Unknown dataset (${dataset})`)
         }
         return match;
-    },
-    getReferenceAngle: function (dataset = shared.dataset) {
-        let match = shape.getGeometry(dataset)
+    }
+    static getReferenceAngle(dataset = shared.dataset) {
+        let match = Shape.getGeometry(dataset)
         return match.angle;
     }
 }
@@ -831,7 +831,7 @@ let Geometry = (function DataModule() {
     return {
         getPathsList: function (dataset = shared.dataset) {
             if (!_data[dataset]) {
-                _data[dataset] = shape.getGeometry(dataset).paths[dataset]()
+                _data[dataset] = Shape.getGeometry(dataset).paths[dataset]()
             }
             return [..._data[dataset]]
         }
@@ -850,7 +850,7 @@ class Page {
         Page.load(shared.dataset)
     }
     static renderMenu() {
-        document.getElementById('menu').innerHTML = shape.metaShapes
+        document.getElementById('menu').innerHTML = Shape.metaShapes
             .reduce((acc, cur) => [...acc, ...Object.keys(cur.paths)], [])
             .map(shape => `<li class="nav-item"><a class="nav-link" href="#" onclick="Page.load('${shape}')">${shape}</a></li>`)
             .join('');
