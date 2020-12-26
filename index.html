@@ -26,46 +26,48 @@
             </nav>
             <!--=============================== MAIN =============================-->
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-                <!--=============================== BOUTONS =============================-->
                 <div
                     class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Dashboard</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group mr-2" role="group" aria-label="First group">
-                            <button class="btn btn-primary" onclick="AnimationManager.stop()"><span
-                                    class="material-icons">
-                                    stop
-                                </span></button>
-                            <button class="btn btn-primary" onclick="AnimationManager.play(DEFAULT)"><span
-                                    class="material-icons">
-                                    play_arrow
-                                </span></button>
-                        </div>
-                        <div class="input-group mr-2" role="group" aria-label="First group">
-                            <input class="form-control" type="number" id="angle" placeholder="angle opening">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary"
-                                    onclick="Animation.renderFrame({angle:document.getElementById('angle').value})">
-                                    <span class="material-icons">
-                                        arrow_forward
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="btn-group mr-2">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="UploadManager.uploadFrame()"><span
-                                    class="material-icons">
-                                    get_app
-                                </span></button>
-                        </div>
-                    </div>
+                    <h1 class="h2">Player</h1>
+                   
                 </div>
                 <!--=============================== ANIMATION =============================-->
                 <div class="row">
                     <div class="col">
-                        <div class="card">
-                            <svg id="tagSVG"></svg>
-                        </div>
+                        
+                        <div class="card border-0">
+                                <svg id="tagSVG" class="m-3"></svg>
+                                <div class="btn-toolbar">
+                                    <div class="btn-group" role="group" aria-label="First group">
+                                        <button class="btn btn-primary" onclick="Player.stop()"><span
+                                                class="material-icons">
+                                                stop
+                                            </span></button>
+                                        <button class="btn btn-primary" onclick="Player.play(DEFAULT)"><span
+                                                class="material-icons">
+                                                play_arrow
+                                            </span></button>
+                                    </div>
+                                    <div class="input-group" role="group" aria-label="First group">
+                                        <input class="form-control" type="number" id="angle" placeholder="angle opening">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary"
+                                                onclick="Player.renderFrame({angle:document.getElementById('angle').value})">
+                                                <span class="material-icons">
+                                                    arrow_forward
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="UploadManager.uploadFrame()"><span
+                                                class="material-icons">
+                                                get_app
+                                            </span></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
                     </div>
                     <!--=============================== DEBUG =============================-->
                     <div class="col">

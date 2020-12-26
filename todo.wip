@@ -1,0 +1,311 @@
+
+/**======================
+ *    PENTAGON
+ *========================**/
+// class MetaPentagon {
+//   static angle = PENTAGON_ANGLE
+//   static point = {
+//     delta: function getPentagonDelta({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: 1.175 * (width / 2) + (width - 1.175 * (width / 2)) / 2,
+//         y: height
+//       };
+//     },
+//     gamma: function getPentagonGamma({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: (width - 1.175 * (width / 2)) / 2,
+//         y: height
+//       };
+//     },
+//     epsilon: function getPentagonEpsilon({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: width,
+//         y: height - (1.118 * height / 1.809)
+//       };
+//     },
+//     beta: function getPentagonBeta({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: 0,
+//         y: height - (1.118 * height / 1.809)
+//       };
+//     },
+//     alpha: function getPentagonAlpha({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: width / 2,
+//         y: 0
+//       };
+//     }
+//   }
+//   static paths = {
+//     pentagram: function getPentagramPaths({
+//       width,
+//       height
+//     } = ShapeManager.getWidthAndHeight()) {
+//       return [
+//         [MetaPentagon.point.alpha({
+//           width,
+//           height
+//         }), MetaPentagon.point.gamma({
+//           width,
+//           height
+//         })],
+//         [MetaPentagon.point.gamma({
+//           width,
+//           height
+//         }), MetaPentagon.point.epsilon({
+//           width,
+//           height
+//         })],
+//         [MetaPentagon.point.epsilon({
+//           width,
+//           height
+//         }), MetaPentagon.point.beta({
+//           width,
+//           height
+//         })],
+//         [MetaPentagon.point.beta({
+//           width,
+//           height
+//         }), MetaPentagon.point.delta({
+//           width,
+//           height
+//         })],
+//         [MetaPentagon.point.delta({
+//           width,
+//           height
+//         }), MetaPentagon.point.alpha({
+//           width,
+//           height
+//         })],
+//       ];
+//     },
+//   }
+//   static sides(size = Player.sizeCm) {
+//     let heightInCentimeter = Mathematic.computePentagonHeightFromWidth(size)
+//     return {
+//       widthInCentimeter: size,
+//       heightInCentimeter,
+//       width: Tools.convertCentimeterToPixel(size),
+//       height: Tools.convertCentimeterToPixel(heightInCentimeter)
+//     }
+//   }
+// }
+/**======================
+ *    HEXAGON
+ *========================**/
+// class MetaHexagon {
+//   static angle = 120
+//   static point = {
+//     delta: function getHexagonDelta({
+//       width,
+//       height
+//     } = ShapeManager.getWidthAndHeight()) {
+//       return {
+//         x: width / 2,
+//         y: height
+//       };
+//     },
+//     epsilon: function getHexagonEpsilon({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: width,
+//         y: (3 / 4) * height
+//       };
+//     },
+//     zeta: function getHexagonZeta({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: width,
+//         y: (1 / 4) * height
+//       };
+//     },
+//     gamma: function getHexagonGamma({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: 0,
+//         y: (3 / 4) * height
+//       };
+//     },
+//     beta: function getHexagonBeta({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: 0,
+//         y: (1 / 4) * height
+//       };
+//     },
+//     alpha: function getHexagonAlpha({
+//       width,
+//       height
+//     } = size.guessSidesFromDataset()) {
+//       return {
+//         x: width / 2,
+//         y: 0
+//       };
+//     }
+//   }
+//   static paths = {
+//     hexagon: function getHexagonPaths({
+//       width,
+//       height
+//     } = ShapeManager.getWidthAndHeight()) {
+//       /**========================================================================
+//        * todo                             Gestion des chemins de l'hexagone
+//        *   Terminer le chemin sur le point adjacent n'est pas satisfaisant.
+//        * - [ ]  prolonger le segment de façon à ce que les arc de cercle couvrent l'hexagone
+//        *========================================================================**/
+//       return [
+//         [MetaHexagon.point.alpha({
+//           width,
+//           height
+//         }), MetaHexagon.point.beta({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.beta({
+//           width,
+//           height
+//         }), MetaHexagon.point.gamma({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.gamma({
+//           width,
+//           height
+//         }), MetaHexagon.point.delta({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.delta({
+//           width,
+//           height
+//         }), MetaHexagon.point.epsilon({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.epsilon({
+//           width,
+//           height
+//         }), MetaHexagon.point.zeta({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.zeta({
+//           width,
+//           height
+//         }), MetaHexagon.point.alpha({
+//           width,
+//           height
+//         })],
+//       ];
+//     },
+//     star: function getStarPaths({
+//       width,
+//       height
+//     } = ShapeManager.getWidthAndHeight()) {
+//       return [
+//         [MetaHexagon.point.alpha({
+//           width,
+//           height
+//         }), MetaHexagon.point.gamma({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.gamma({
+//           width,
+//           height
+//         }), MetaHexagon.point.epsilon({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.epsilon({
+//           width,
+//           height
+//         }), MetaHexagon.point.alpha({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.beta({
+//           width,
+//           height
+//         }), MetaHexagon.point.delta({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.delta({
+//           width,
+//           height
+//         }), MetaHexagon.point.zeta({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.zeta({
+//           width,
+//           height
+//         }), MetaHexagon.point.alpha({
+//           width,
+//           height
+//         })]
+//       ];
+//     },
+//     triangle: function getTrianglePaths({
+//       width,
+//       height
+//     } = ShapeManager.getWidthAndHeight()) {
+//       return [
+//         [MetaHexagon.point.alpha({
+//           width,
+//           height
+//         }), MetaHexagon.point.gamma({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.gamma({
+//           width,
+//           height
+//         }), MetaHexagon.point.epsilon({
+//           width,
+//           height
+//         })],
+//         [MetaHexagon.point.epsilon({
+//           width,
+//           height
+//         }), MetaHexagon.point.alpha({
+//           width,
+//           height
+//         })]
+//       ];
+//     }
+//   }
+//   static sides(size = Player.sizeCm) {
+//     let widthInCentimeter = Mathematic.computeHexagonWidthFromHeight(size)
+//     return {
+//       widthInCentimeter,
+//       heightInCentimeter: size,
+//       width: Tools.convertCentimeterToPixel(widthInCentimeter),
+//       height: Tools.convertCentimeterToPixel(size)
+//     }
+//   }
+// }
